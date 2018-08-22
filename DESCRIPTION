@@ -1,0 +1,34 @@
+Package: phylo.lipids
+Type: Package
+Title: Functions to compare environmental lipidomic and meta taxonomic data
+Version: 0.0.0.900
+Author: Yuki Weber
+Maintainer: Yuki Weber <yuki.t.weber@gmail.com>
+Description: Allows you to correlate ribosomal RNA gene-based meta-taxonomic data with concentrations of lipid biomarkers, 
+   and to visualize the phylogenetic affiliation of corresponding taxa.
+License: GPL 3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
+Suggests:
+   knitr,
+   rmarkdown,
+   BiocInstaller
+VignetteBuilder: knitr
+Imports: 
+   devtools,
+   rmarkdown,
+   readr,
+   readxl,
+   magrittr,
+   dplyr,
+   phyloseq,
+   BiocManager,
+   randomcoloR,
+   tibble,
+   tidyr,
+   ggplot2
+Depends: R (>= 2.10)
+Remotes: 
+   github::joey711/phyloseq,
+   github::Bioconductor/BiocInstaller

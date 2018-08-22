@@ -1,0 +1,250 @@
+---
+title: "Lake Lugano brGDGT vs 16S-rDNA"
+output: 
+   html_document: 
+      
+      code_folding: show
+      standalone: true
+      self-contained: true
+   pdf_document: default
+   html_notebook: default
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+ echo = TRUE,
+ include = TRUE,
+ results = "show",
+ cache = F,
+ warning = FALSE,
+ message = FALSE,
+ fig.path = "figs/"
+ # dev = c("pdf", "png")
+ #dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE))
+ )
+
+require(tinytex)
+```
+&nbsp;
+
+#### Reproducing the analysis published in: *Yuki Weber, Jaap S. Sinninghe Damsté, Jakob Zopfi, Cindy De Jonge, Adrian Gili, Carsten J. Schubert, Fabio Lepori, Moritz F. Lehmann, Helge Niemann (2018): **"Redox-dependent niche differentiation of tetraether lipid producing bacteria: Evidence for multiple branched GDGT sources in lakes"***
+
+&nbsp;
+
+### Preparation
+
+1.) Install 'R' and 'RStudio' on your machine.
+
+2.) Download Supplementary Information Datasets 1 and 2 from the publisher's website and place files *dataset1.xls* and *dataset2.xls* into the working directory (i.e, the RStudio project folder).  
+
+*<b>note:</b>*
+To execute the following code in RStudio, run the respective code chunks (gray boxes) either by pressing *CMD + Shift + Enter* (Mac), or by clicking on the 'play' button in the upper right corner of rach code block.
+
+&nbsp;
+
+### Run the analysis
+
+&nbsp;
+
+#### Install phylo.lipids package
+```{r}
+# install devtools if not present and load
+if (!"devtools" %in% rownames(installed.packages())) {
+ install.packages("devtools")
+}
+require(devtools)
+
+# install the phylo.lipids package from local source and load
+if (!"phylo.lipids" %in% rownames(installed.packages())) {
+ devtools::install_github("yukiweber/phylo.lipids", build_vignettes = F)
+}
+require(phylo.lipids)
+```
+
+&nbsp;
+
+#### Load raw data files
+```{r, echo=TRUE, include=TRUE, warning=T}
+### load data files ----
+## OTU table
+lugano_otu =
+  readxl::read_xls ("dataset1.xls", sheet = "otu.table" ) %>%
+  as.data.frame()
+# set otu names as rownames 
+rownames(lugano_otu) = lugano_otu[, 1][] 
+# remove name column
+lugano_otu = lugano_otu[ ,-1]
+  
+## total DNA concentrations
+lugano_sam_dat =
+  readxl::read_xls ("dataset1.xls", sheet = "sample.data" ) %>%
+  as.data.frame()
+# set rownames as sample names (identical with otu table)
+rownames(lugano_sam_dat) = colnames(lugano_otu)
+
+## taxonomy table
+lugano_tax =
+  readxl::read_xls ("dataset1.xls", sheet = "tax.table" ) %>%
+  as.data.frame()
+# set otu names as rownames 
+rownames(lugano_tax) = lugano_tax[,1][]
+# remove name column
+lugano_tax = lugano_tax[ ,-1]
+
+## build phyloseq object ----
+## contains OTU and taxonmoy tables, and sample data (here: DNA concentraions)
+lugano_PHY =
+  phyloseq::phyloseq (
+    phyloseq::otu_table (as.matrix(lugano_otu), taxa_are_rows = TRUE),
+    phyloseq::tax_table (as.matrix(lugano_tax)),
+    phyloseq::sample_data (lugano_sam_dat)
+  )
+```
+
+&nbsp;
+
+#### Processing of DNA data
+```{r, echo=TRUE, include=TRUE, warning=FALSE}
+## Transform OTU data ----
+lugano_PHY %>%
+# remove taxa that have less than 40 reads across all samples
+phylo.lipids::trim_taxa_sum (min = 40) %>% 
+# remove taxa that occurr in less than 5 samples
+phylo.lipids::trim_taxa_samp (min = 5, fraction = F) %>%
+# normalize to total dna
+phylo.lipids::norm_dna (.@sam_data$`yg.DNA.L-1`) %>%
+# remove eucaryotes and archaea
+phylo.lipids::remove_clades (., c("Chloroplast", "Mitochondria", "Archaea")) -> PHY1
+
+PHY2 = 
+  PHY1 %>%
+  # remove 100 m sample because the corresponsding lipid sample was lost
+  phyloseq::subset_samples (depth != 100)
+
+# test if there are still eukaryotic sequences
+if (class (try (phyloseq::subset_taxa(PHY2, Class=="Chloroplast"))) != "try-error" | 
+    class (try (phyloseq::subset_taxa(PHY2, Family=="Mitochondria"))) != "try-error"
+) { rm(PHY2)
+    rep("ALARM: still containing Eukaryotes!!",6) }
+
+## differentiate between classes of Proteobacteria ----
+PHY2 %>%
+ phylo.lipids::diff_proteo() -> PHY3
+```
+
+&nbsp;
+
+#### Load and prepare raw lipid data
+```{r, echo=TRUE, include=TRUE, warning=TRUE}
+## load lipid data
+lugano_SPM =
+  readxl::read_xls ("dataset2.xls", sheet = "Ludano.SPM.ng.L-1" ) %>%
+  as.data.frame()
+## replace introduced dots in lipid names
+colnames(lugano_SPM) = gsub("[.]","'", colnames(lugano_SPM))
+
+## select lipid fraction for correlation (here: sum of all fractions, i.e., "total")
+lipids =
+ lugano_SPM %>% dplyr::filter (fraction == "total") %>%
+ ## and keep only lipid data columns 
+ dplyr::select (-depth, - fraction)
+
+# subset lipids ----
+# (here we only look at the major brGDGTs and the sum of all brGDGTs)
+# the brGDGT names (columns)
+bG.major = c("IIIa","IIIa''","IIIa'","IIa", "IIa'","Ia")
+# select major brGDGTs and sum
+lipids %>% dplyr::select(bG.major, sum_bG) -> L
+```
+
+&nbsp;
+
+#### This yields a class phyloseq object and a lipid table
+```{r}
+# taxonomy and OTU-specific DNA concentrations:
+# (nuber of samples must match number of rows in the lipid table)
+PHY3
+# lipid concentrations:
+# (make sure all colums contain lipid data, i.e., no name/ID column etc)
+tibble::as.tibble(lipids) %>% knitr::kable(digits = 2)
+```
+
+&nbsp;
+
+#### Correlation between OTUs and each lipid
+```{r lugano_cor_phy, fig.height=4}
+# use the cor_phy() function and save the results
+# for information on the function's options, refer to the help page
+phylo.lipids::cor_phy( phy= PHY3, L,
+                       display = c("Acidobacteria"),
+                       alpha = 0.9,
+                       alpha.other = 0.2,
+                       col.other = "gray70",
+                       colors = "random",
+                       luminosity = "dark",
+                       width = 0.3,
+                       aspect = 1,
+                       box.plot = F
+                       ) -> lugano_cor_phy_results
+
+# display output
+# output contains a plot and two data frames
+lugano_cor_phy_results$plot
+lugano_cor_phy_results$lipids 
+lugano_cor_phy_results$taxa 
+```
+
+&nbsp;
+
+#### Diversity of OTUs correlated with each lipid
+```{r lugano_cor_tax, include=T, results='show', echo=T, fig.width=8, fig.asp=1, fig.height=8}
+
+# Subset major brGDGTs
+L = lipids  %>% dplyr::select(bG.major)
+
+# use phylo_lipids() function to perform pearson correlation and
+# summarize taxonomy at the Phylum level 
+phylo_lipids( phy = PHY3, L,
+              level = "Phylum",
+              thresh = 0.75,
+              method = "pearson",
+              cutoff = 0.04,
+              exempt = "Acidobacteria",
+              n.col = 3,
+              sort.tax = "alpha",
+              text.size = 14,
+              guide.col = 1
+              ) -> lugano_cor_tax_results
+
+lugano_cor_tax_results$pies
+lugano_cor_tax_results$table
+lugano_cor_tax_results$summary
+```
+
+
+#### Diversity of Acidobacteria correlated with each lipid
+```{r include=FALSE, results='hide', echo=T}
+
+PHY3 %>%
+   phyloseq::subset_taxa(Phylum=="Acidobacteria") %>%
+   phylo_lipids( phy = ., 
+                 lipids = L,
+                 level = "Class",
+                 thresh = 0.75,
+                 method = "pearson",
+                 cutoff = 0.0,
+                 n.col = 3,
+                 sort.tax = "alpha",
+                 text.size = 14
+                 ) -> lugano_acido_cor_tax_results
+
+```
+
+```{r lugano_acido_cor_tax, fig.width=8, fig.asp=1, fig.height=8}
+lugano_acido_cor_tax_results$pies
+lugano_acido_cor_tax_results$table
+lugano_acido_cor_tax_results$summary
+```
+

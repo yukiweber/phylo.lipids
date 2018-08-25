@@ -41,7 +41,7 @@ cor_tax = function (phy,
 
   ## check if 'exempt' taxon is in the tax table ----
    if (is.character (exempt)) {
-     if (try (exempt %in% unique (y [[level]])) == FALSE) {stop ("You have provided a wrong 'exempt' taxon! Check spelling!")
+     if (sum(exempt %in% unique(y[[level]]) ) < length(exempt)) {stop ("You have provided a wrong 'exempt' taxon! Check spelling!")
      }
    }
 
@@ -82,7 +82,7 @@ cor_tax = function (phy,
         dplyr::group_by_(paste(level)) %>%
         dplyr::summarise(n = n()) %>%
         dplyr::mutate(rel.cnt = n/ sum(n)) -> d
-unique(d$Phylum)
+
      if (nrow(d) > 0) {
        if (sum(d$rel.cnt) != 1) {
          stop("false rel.cnt")
@@ -97,9 +97,8 @@ unique(d$Phylum)
      cu = cu[order (cu)] # order that list alphabetically
 
      ## apply exemption to cutoff ----
-     # check if exempt taxa/taxon are/is among the low abundance taxa
-     # if so, remove this from the list of low abundance taxa
-     if (try (exempt %in% cu) == TRUE ) { cu = cu[-which(cu == exempt)]}
+     # only keep taxa in the cutoff list that are not in exempt
+     cu = cu[which(cu %!in% exempt)]
 
      # replace below cutoff taxa values in 'c' with 'other'----
      c %>%

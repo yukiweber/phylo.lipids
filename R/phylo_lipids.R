@@ -90,8 +90,9 @@ phylo_lipids = function (
     dplyr::group_by_ (paste(level), "variable") %>% # standard evaluation
     dplyr::summarise (n = n()) %>%
     dplyr::ungroup() %>%
-    dplyr::arrange (variable) # %>% # sort by compound names
-    # dplyr::mutate(!!level := as.factor(.[[!!level]]))
+    dplyr::arrange (variable) %>% # sort by compound names
+    dplyr::mutate (variable = as.factor (variable)) # factorize lipid names
+     # dplyr::mutate(!!level := as.factor(.[[!!level]])) # but not taxa names yet
 
   ## list of well-correlating taxonomic groups across all lipids ----
   unique (tax[[level]]) %>%
@@ -151,53 +152,54 @@ phylo_lipids = function (
   ### prepare data for pie charts
 
   ## normalize OTU counts for each compound (count/concentration-sums) for pie charts ----
-  x = # to be used by ggplot
-    tax %>%
-      dplyr::group_by (variable) %>%
-      dplyr::mutate_at (dplyr::vars (n), dplyr::funs (./sum (., na.rm = TRUE))) %>%
-      dplyr::ungroup () %>%
-      dplyr::mutate (variable = as.factor (variable))
+#  tax = # to be used by ggplot
+#    tax %>%
+#      dplyr::group_by (variable) %>%
+#      dplyr::mutate_at (dplyr::vars (n), dplyr::funs (./sum (., na.rm = TRUE))) %>%
+#      dplyr::ungroup () %>%
+      # factorize lipid variable
+#      dplyr::mutate (variable = as.factor (variable))
 
   ## check if normalization was correct ----
-  if (sum (x$n, na.rm = T) !=  length (unique (tax$variable))) {
-    stop ("Normalization per compound failed!")
-  }
+#  if (sum (x$n, na.rm = T) !=  length (unique (tax$variable))) {
+#    stop ("Normalization per compound failed!")
+#  }
 
   ## relevel so that expemt taxa are always on top ----
   if (is.character(exempt)) {
-     y = x[[level]] # factor with taxa
+     y = tax[[level]] # factor with taxa
      for (i in length(exempt):1) { # reverse the order
         if (exempt[i] %in% levels(y)) {
            y = relevel(y, exempt[i])
         }
      }
-  x[[level]] = y
+  tax[[level]] = y
   }
 
 
   ## relevel so that 'other' and 'NA' (ukn) are first ----
-  if ("other" %in%  levels (x[[paste (level)]]) == TRUE) {
-    x[[level]] %>%
+  if ("other" %in%  levels (tax[[paste (level)]]) == TRUE) {
+    tax[[level]] %>%
       relevel(. , "other" ) -> y
-    x[level] = y
+    tax[level] = y
   }
-  if ("ukn." %in% levels (x[[paste (level)]]) == TRUE) {
-    x[[level]] %>%
+  if ("ukn." %in% levels (tax[[paste (level)]]) == TRUE) {
+    tax[[level]] %>%
       relevel (., "ukn.") -> y
-    x[level] = y
+    tax[level] = y
   }
 
   ####  make pie charts ####
 
   ## check for varaible mismatch ----
-  if (sum(levels(x$variable) == levels(ntax$variable)) <
-      length(levels(x$variable))) {
+  if (sum(levels(tax$variable) == levels(ntax$variable)) <
+      length(levels(tax$variable))) {
     stop ("Variables jumbled!!")}
 
   ## make color palett ----
-  colourCount = length( unique(x[[level]]))
+  colourCount = length( unique(tax[[level]]))
   ptb =
-    tibble::tibble (randomcoloR::distinctColorPalette (colourCount), levels(x[[level]]))
+    tibble::tibble (randomcoloR::distinctColorPalette (colourCount), levels(tax[[level]]))
   ptb[[1]][which(ptb[[2]] == "other")] = "gray95" ## replace color assignment for other
   ptb[[1]][which(ptb[[2]] == "ukn.")] = "black" ## replace color assignment for ukn.
 
@@ -222,7 +224,7 @@ phylo_lipids = function (
 
 
   if (try (is.character (exempt)) == T) {
-    string3 = paste(", except ", exempt,".", sep = "")
+    string3 = paste(", except ", paste(exempt, collapse=" and "), ".", sep = "")
   } else {
     string3 = ifelse (cutoff > 0, ".", "")
   }
@@ -249,11 +251,43 @@ phylo_lipids = function (
       )
 
 
+  ## bar graph
+  P2 =
+    tax %>%
+      ggplot2::ggplot () +
+      ggplot2::geom_bar (width = 0.85, stat = "identity",
+                         mapping = ggplot2::aes_string( "variable" , "n", fill=paste(level)),
+                         position = "fill"
+                         ) +
+      #ggplot2::facet_wrap ("variable", ncol = n.col) +
+      mytheme +
+      ggplot2::theme(axis.text = ggplot2::element_text(),
+                     panel.border = ggplot2::element_blank(),
+                     axis.ticks.y = ggplot2::element_line(),
+                     axis.title = ggplot2::element_text(size = text.size)) +
+      ggplot2::scale_y_continuous(expand = c(0.0,0)) +
+      ggplot2::scale_fill_manual (values = c (ptb[[1]])) +
+      ggplot2::geom_text (ggplot2::aes ( variable, value),
+                          data=ntax,
+                          label = paste ("n=", ntax$n, sep = ""),
+                          vjust=-0.7,
+                          hjust=0.5,
+                          size = text.size/2.75 ) +
+      ggplot2::labs (title = paste (string1, string2, string3, "\n\n", sep = "")) +
+      ggplot2::coord_cartesian(clip = 'off') +
+      ggplot2::xlab("compounds") +
+      ggplot2::ylab("fraction")
+      #ggplot2::labs(caption = paste (string1, string2, string3, "\n\n", sep = ""))
+
+
+
   ## plot pie chart ----
   P1=
-    x %>%
+    tax %>%
       ggplot2::ggplot () +
-      ggplot2::geom_bar (width = 1, stat = "identity", ggplot2::aes_string( '""' , "n", fill=paste(level))) +
+      ggplot2::geom_bar (width = 1, stat = "identity",
+                         mapping = ggplot2::aes_string( '""' , "n", fill=paste(level)),
+                         position = "fill" )  +
       ggplot2::coord_polar ("y", start=0) +
       ggplot2::facet_wrap ("variable", ncol = n.col) +
       ggplot2::guides (fill=FALSE) +
@@ -270,6 +304,7 @@ phylo_lipids = function (
   ## Return Plots and raw data in a list
   return (
    list(
+     bars = P2 + ggplot2::guides(fill = ggplot2::guide_legend (ncol = guide.col)),
      pies = P1 + ggplot2::guides(fill = ggplot2::guide_legend (ncol = guide.col)), # plot with legend in 2 columns
      table = tibble::as.tibble(tax),
      summary = gsub("\n", " ",   paste (string1, string2, string3, sep = ""))

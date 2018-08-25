@@ -224,7 +224,7 @@ phylo_lipids = function (
   if (try (is.character (exempt)) == T) {
     string3 = paste(", except ", exempt,".", sep = "")
   } else {
-    string3 = "."
+    string3 = ifelse (cutoff > 0, ".", "")
   }
 
 

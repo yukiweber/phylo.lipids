@@ -225,7 +225,7 @@ lugano_cor_tax_results$summary
 
 
 #### Diversity of Acidobacteria correlated with each lipid
-```{r include=FALSE, results='hide', echo=T}
+```{r lugano_acido_cor_tax, fig.width=8, fig.asp=1, fig.height=8}
 
 PHY3 %>%
    phyloseq::subset_taxa(Phylum=="Acidobacteria") %>%
@@ -240,9 +240,6 @@ PHY3 %>%
                  text.size = 14
                  ) -> lugano_acido_cor_tax_results
 
-```
-
-```{r lugano_acido_cor_tax, fig.width=8, fig.asp=1, fig.height=8}
 lugano_acido_cor_tax_results$pies
 lugano_acido_cor_tax_results$table
 lugano_acido_cor_tax_results$summary

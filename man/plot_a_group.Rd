@@ -2,19 +2,31 @@
 % Please edit documentation in R/plot_a_group.R
 \name{plot_a_group}
 \alias{plot_a_group}
-\title{helper function: plots standardized}
+\title{helper function: plots standardized otu abundances}
 \usage{
-plot_a_group(x, phy, label = "NULL")
+plot_a_group(phy, taxnames, label = "NULL", otus = TRUE,
+  ribbon = TRUE, ncol = 5)
 }
 \arguments{
-\item{x}{character vector with otu names}
-
 \item{phy}{Phyloseq object}
+
+\item{taxnames}{A (list of) char vector(s) containing otu names to be plotted
+If list, output will be facetted by the elements of the list.}
+
+\item{label}{a element of phy'at'sam_data to replace the original sample names}
+
+\item{otus}{display individual otus?}
+
+\item{ribbon}{Plot error bounds (+/- 2*SD)}
+
+\item{ncol}{Number of columns in facets}
+
+\item{x}{character vector with otu names}
 }
 \value{
-ggplot gragh
+ggplot line plot
 }
 \description{
-helper function: plots standardized
+helper function: plots standardized otu abundances
 }
-\keyword{internal}
+\keyword{clustering}

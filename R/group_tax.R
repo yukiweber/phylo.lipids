@@ -2,12 +2,16 @@
 #'
 #' Aussumes that second taxonomic rank is 'Phylum'
 #' @param phy Phyloseq object containing at least an OTU and a taxonomy table.
+#' @param h Height passed to 'cuttree'. Will be overridden by 'k' if k is numeric.
+#' @param k Number of branched for 'cuttree'.
+#' Overrides 'h' setting if provided (i.e., numeric).
+#' @param dist Distance matrix type passed to 'dist()' to be used in clustering
+#' @param clust Hclust method passed to 'hclust()'
 #' @export
 #' @examples
 #' @return A list with i elements, containing the OTU/taxa names in the i-th group
 
 group_tax = function(phy,
-                     cut = F,
                      h = FALSE,
                      k = 20,
                      dist = c( "euclidean","bray","..."),
@@ -30,8 +34,9 @@ group_tax = function(phy,
 
       # cut tree gives a table with otu name vs group affiliation
       if (is.numeric(h) == T) {hc1 = cutree(hc, h = h)}
-      if(is.numeric(k) == T) {hc1 = cutree(hc, k = k)}
-      #else { stop("Provide either h or k to cut the cluster tree!")}
+      if (is.numeric(k) == T) {hc1 = cutree(hc, k = k)}
+      if ( sum( is.numeric(h) , is.numeric(k)) == 0)  {
+         stop("Provide either h or k to cut the cluster tree!")}
 
       # plot the tree
       # as to be written... or not
@@ -62,6 +67,3 @@ group_tax = function(phy,
    }
 return(L)
 }
-
-
-

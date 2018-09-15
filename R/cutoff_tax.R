@@ -1,10 +1,14 @@
-#' applies cutoff
+#' applies cutoff abundance
 #'
 #' cutoff for subsummation as 'other, expemtions to this rule
 #' @param phy Phyloseq object containing at least an OTU and a taxonomy table.
+#' @param level taxonomic level
+#' @param cutoff cutoff abundance for assignment of 'other'
+#' @param exempt character vector of taxa exempt from cutoff
 #' @export
 #' @examples
-#' @return A list with i elements, containing the OTU/taxa names in the i-th group
+#' @return A list with i elements, containing the filtered OTU/taxa names in the i-th group
+#' @keywords internal
 
 
 cutoff_tax = function (phy,

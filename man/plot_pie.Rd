@@ -4,13 +4,25 @@
 \alias{plot_pie}
 \title{helper function: Plots taxonomy pie chart}
 \usage{
-plot_pie(x, count = c("n", "avg"))
+plot_pie(x, count = c("n", "avg"), level = "Phylum",
+  taxa_groups = NULL, ncol = 5, key_col = 2)
 }
 \arguments{
-\item{x}{data frame or tibble containing the columns:
-1) Taxonomy (character)
-2) number of taxa (integers)
-3) average abundance}
+\item{x}{data frame or tibble containing at least the columns:
++ Taxonomy as character vector (1st cloumn)
++ number of taxa ('n')
++ summed abundance acoss data set ('sum')
++ color values ('col')}
+
+\item{count}{select the summary method: otu counts (n) or otu summed abundances (sum)}
+
+\item{level}{Taxonomic level}
+
+\item{taxa_groups}{A optional list of character vector containing grou taxa names for facetting}
+
+\item{ncol}{Number of columns in facets}
+
+\item{key_col}{Number of columns of the color key}
 }
 \value{
 ggplot pie chart
@@ -18,4 +30,4 @@ ggplot pie chart
 \description{
 helper function: Plots taxonomy pie chart
 }
-\keyword{internal}
+\keyword{visualization}

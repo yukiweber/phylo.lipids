@@ -2,8 +2,14 @@
 #'
 #'
 #' @param phy Phyloseq object containing at least an OTU and a taxonomy table.
-#' @param x list of n groups containing otu names of each group
-#' @param label A column of 'phy'at'samdata' that is used to label observations (character string), or a vector of same lengh as observations
+#' @param label A column of 'phy'at'samdata' that is used to label observations (character string),
+#' or a vector of same lengh as observations
+#' @param cutoff cutoff abundance for assignment of 'other'
+#' @param exempt character vector of taxa exempt from cutoff
+#' @param level taxonomic level
+#' @param ncol Number of columns in the arranged plots/facets
+#' @param key_col Number of columns of the color key
+#'
 #' @export
 #' @examples
 #' @return a summary plot
@@ -18,9 +24,12 @@ plot_groups = function (phy,
                         otus = T, # plot individual otus
                         ribbon =T, # plot ribbons
                         prune_groups = NULL, # plot only selevted groups
-                        count = c("n","avg"), # select count type
+                        count = c("n","sum"), # select count type
                         fancy = T, # plots overlay plots
-                        highlight = "NULL"
+                        highlight = "NULL",
+                        standardize = c("sum","max"),
+                        ncol = 5,
+                        key_col = 2
                         ) {
 
 
@@ -39,7 +48,8 @@ plot_groups = function (phy,
    x = as.data.frame (phy@otu_table, stringsAsFactors = F)
    colnames(x) -> sam_names
 
-   # replace sample names sample data (e.g. "depth)
+   # if alternative label was defined
+   # replace sample names with sample data (e.g. "depth)
    sam_var="sample"
    if(label[1] %in% colnames(phy@sam_data)){
          colnames(x) = phy@sam_data[[label]]
@@ -47,16 +57,31 @@ plot_groups = function (phy,
          sam_var = label[1]
    }
 
-   # compute average abundance across all samples
-   avg = Reduce('+', x) / ncol(x)
-   # standardize abundances
-   x = as.data.frame(sapply(x,`/`,rowSums(x)))
+   # compute abundance SUMs across all samples ----
+   sum = Reduce('+', x) # / ncol(x) # prev: averages
+
+   # standardize abundances of each otu relative to  ----
+   # the max value across all samples
+   if (standardize[1] == "max") {
+      x =
+         as.data.frame(
+            lapply ( x , `/` , # apply to each row
+                    apply(x, 1, max) # max values in reach row (otu)
+                  )
+         )
+   }
+   # OR the abundance sum across all samples
+   if (standardize[1] == "sum") {
+      x = as.data.frame(sapply(x,`/`,rowSums(x)))
+   }
+
+   # add the SUMs and otu names to the DF
    x = x %>%
-      dplyr::mutate(avg = avg, # compute average abundance across samples
+      dplyr::mutate(sum = sum, # previously computed abundance SUMs
                     otu = rownames(.)) %>% # add otu column
       tibble::as.tibble()  # standardize abundances
 
-   # TAX table
+   # TAX table ----
    # no factors!
    # use 'select' when phyloseq package is not loaded!
    y = as.data.frame (phy@tax_table , stringsAsFactors = F) %>%
@@ -71,7 +96,7 @@ plot_groups = function (phy,
 
    # gather
    x1 %>%
-      tidyr::gather(key = !!sam_var, value = "abundance", -otu, -avg, -!!level ) %>%
+      tidyr::gather(key = !!sam_var, value = "abundance", -otu, -sum, -!!level ) %>%
       tibble::as.tibble() -> x2
 
    # assign groups to otus
@@ -89,7 +114,7 @@ plot_groups = function (phy,
          dplyr::filter(group==i) %>%
          dplyr::group_by_(level) %>%
          dplyr::summarise(n = n(),
-                          avg = sum(avg)) %>%
+                          sum = sum(sum)) %>%
          # relative counts depending on the count type
          dplyr::mutate(rel.cnt = get(count[1]) / sum(get(count[1])))
 
@@ -137,7 +162,7 @@ plot_groups = function (phy,
    colourCount = length( unique(x3[[level]]))
    ptb =
       tibble::tibble (randomcoloR::distinctColorPalette (colourCount), levels(x3[[level]]))
-   ptb[[1]][which(ptb[[2]] == "other")] = "gray95" ## replace color assignment for other
+   ptb[[1]][which(ptb[[2]] == "other")] = "gray90" ## replace color assignment for other
    ptb[[1]][which(ptb[[2]] == "ukn.")] = "black" ## replace color assignment for ukn.
    colnames(ptb) = c("col",paste(level))
    # make sure the factor levels are the same order
@@ -152,7 +177,7 @@ plot_groups = function (phy,
    if (highlight[1] != "NULL" &
        sum ( highlight %in% y[[level]]) == length(highlight)) {
       x3["col"][which(
-         ! x3[[level]] %in% c( highlight, "other" , "ukn.") ), ] = "gray95"
+         ! x3[[level]] %in% c( highlight, "other" , "ukn.") ), ] = "white"
    }
 
 
@@ -234,15 +259,15 @@ plot_groups = function (phy,
    x3 %>% # all data
    dplyr::group_by_(level) %>%
    dplyr::summarise(n=n(),
-                    avg = sum(avg),
+                    sum = sum(sum),
                     col = unique(col)) -> x5
 
    # dummy plot for color legend, from whole data set
    x5 %>%
-   ggplot2::ggplot(ggplot2::aes_string(x= paste(level), y = "avg" , fill = paste(level))) +
+   ggplot2::ggplot(ggplot2::aes_string(x= paste(level), y = count[1] , fill = level)) +
       ggplot2::scale_fill_manual(values = x5$col ) +
       ggplot2::geom_bar(stat = "identity") +
-      ggplot2::guides(fill = ggplot2::guide_legend (ncol = 3,
+      ggplot2::guides(fill = ggplot2::guide_legend (ncol = key_col,
                                                     title = paste0(level," (", count[1], ")"))
                       ) ->  d
 
@@ -262,13 +287,14 @@ plot_groups = function (phy,
    ggpubr::as_ggplot(dd) -> D1
 
 
-   ### simple facet wraps
+   ### simple facet wraps ----
    Fg =
       plot_a_group(taxnames = g,
                    phy = phy,
                    label = label,
                    otus = otus,
-                   ribbon = ribbon) +
+                   ribbon = ribbon,
+                   ncol = ncol) +
          blank_theme_x
 
    Fp =
@@ -276,19 +302,23 @@ plot_groups = function (phy,
          plot_pie(x = .,
                   count = count,
                   level = level,
-                  taxa_groups = NULL
+                  taxa_groups = NULL,
+                  ncol = ncol,
+                  key_col = key_col
                   ) +
          blank_theme
 
 
    ### outputs ----
 
-   # arrage plots
+   # arrage fancy plots ----
    A = ""
    B = ""
    if (fancy==T) {
       # plots only
-      gridExtra::grid.arrange(grobs = c(L), ncol = round(length(L)/1.8, 0)) %>%
+      gridExtra::grid.arrange(grobs = c(L),
+                              ncol = ncol
+                              ) %>%
          ggplotify::as.ggplot() -> A
 
       ## as a single figure with legend
@@ -298,8 +328,11 @@ plot_groups = function (phy,
       L1 = c(L,ddd)
       # plot together
       gridExtra::grid.arrange(
-         ggplotify::as.grob(gridExtra::grid.arrange(grobs = L1)),
-         ncol = round(length(L1)/1.8, 0)
+         ggplotify::as.grob(
+            gridExtra::grid.arrange(grobs = L1,
+                                    ncol = ncol
+                                    )
+            )
          ) %>%
          ggplotify::as.ggplot() -> B
       }

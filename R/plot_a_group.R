@@ -1,19 +1,25 @@
-#' helper function: plots standardized
-#'
+#' helper function: plots standardized otu abundances
 #'
 #' @param x character vector with otu names
 #' @param phy Phyloseq object
+#' @param taxnames A (list of) char vector(s) containing otu names to be plotted
+#' If list, output will be facetted by the elements of the list.
+#' @param label a element of phy'at'sam_data to replace the original sample names
+#' @param otus display individual otus?
+#' @param ribbon Plot error bounds (+/- 2*SD)
+#' @param ncol Number of columns in facets
 #' @export
 #' @examples
-#' @return ggplot gragh
-#' @keywords internal
+#' @return ggplot line plot
+#' @keywords clustering
 
 # x character vector with otu names
 plot_a_group = function (phy,
-                         taxnames, # a (list of) char vector(s). If list, output will be facetted by the elements of the list
+                         taxnames,
                          label = "NULL",
                          otus = TRUE,
-                         ribbon = TRUE
+                         ribbon = TRUE,
+                         ncol = 5
                          ) {
 
    # check if taxa names are valid
@@ -112,7 +118,8 @@ plot_a_group = function (phy,
    if (is.list(taxnames) == T) {
       p = p +
          ggplot2::facet_wrap("group",
-                             scales = "fixed")
+                             scales = "fixed",
+                             ncol = ncol )
    }
    return(p)
 }

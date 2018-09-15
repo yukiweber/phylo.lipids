@@ -10,4 +10,4 @@
 \description{
 "not in"
 }
-\keyword{intern}
+\keyword{internal}

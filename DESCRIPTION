@@ -1,11 +1,12 @@
 Package: phylo.lipids
 Type: Package
 Title: Functions to compare environmental lipidomic and meta taxonomic data
-Version: 0.0.0.900
+Version: 0.0.0.901
 Author: Yuki Weber
 Maintainer: Yuki Weber <yuki.t.weber@gmail.com>
-Description: Allows you to correlate ribosomal RNA gene-based meta-taxonomic data with concentrations of lipid biomarkers, 
-   and to visualize the phylogenetic affiliation of corresponding taxa.
+Description: Allows you to explore and visualize environmental meta-taxonomic data, 
+   and to correlate it with other environmental variables 
+   (e.g. concentration of lipid biomarkers). 
 License: GPL 3
 Encoding: UTF-8
 LazyData: true
@@ -27,7 +28,11 @@ Imports:
    randomcoloR,
    tibble,
    tidyr,
-   ggplot2
+   ggplot2,
+   cowplot,
+   ggplotify,
+   ggpubr,
+   gridExtra
 Depends: R (>= 2.10)
 Remotes: 
    github::joey711/phyloseq,

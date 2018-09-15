@@ -4,12 +4,21 @@
 \alias{group_tax}
 \title{Finds groups of OTUs/taxa with similar spatial distribution}
 \usage{
-group_tax(phy, cut = F, sq = F, h = FALSE, k = 20,
-  dist = c("euclidean", "bray", "..."), clust = c("ward.D2", "ward.D",
-  "single", "complete", "average", "mcquitty", "median", "centroid"))
+group_tax(phy, h = FALSE, k = 20, dist = c("euclidean", "bray",
+  "..."), clust = c("ward.D2", "ward.D", "single", "complete", "average",
+  "mcquitty", "median", "centroid"))
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
+
+\item{h}{Height passed to 'cuttree'. Will be overridden by 'k' if k is numeric.}
+
+\item{k}{Number of branched for 'cuttree'.
+Overrides 'h' setting if provided (i.e., numeric).}
+
+\item{dist}{Distance matrix type passed to 'dist()' to be used in clustering}
+
+\item{clust}{Hclust method passed to 'hclust()'}
 }
 \value{
 A list with i elements, containing the OTU/taxa names in the i-th group

@@ -1,0 +1,273 @@
+---
+title: "Lake Lugano 16S-rDNA ecology"
+author: "Yuki Weber"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+ echo = TRUE,
+ include = TRUE,
+ results = "show",
+ cache = F,
+ warning = FALSE,
+ message = FALSE,
+ fig.path = "figs/"
+ # dev = c("pdf", "png")
+ #dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE))
+ )
+
+#require(tinytex)
+```
+&nbsp;
+## Exploring bacterial diversity in ecological niches within the water column
+
+&nbsp;
+#### Install phylo.lipids package
+```{r}
+# install devtools if not present and load
+if (!"devtools" %in% rownames(installed.packages())) {
+ install.packages("devtools")
+}
+require(devtools)
+
+# install the phylo.lipids development package and load 
+if (!"phylo.lipids" %in% rownames(installed.packages())) {
+ devtools::install_github("yukiweber/phylo.lipids", ref = "release/0.0.901", build_vignettes = T)
+}
+require(phylo.lipids)
+```
+
+&nbsp;
+
+#### Load raw data files
+(alternatively you can use your existing phyloseq objects)  
+Be aware of the effects of using either relative abundance data or DNA concentrations 
+(based on total DNA or qPCR etc.)
+
+```{r, echo=TRUE, include=TRUE, warning=T}
+### load data files ----
+otu_names=
+  readr::read_csv(
+    system.file("extdata", "lugano.otu.table.csv", package = "phylo.lipids"),
+    col_names = T ) %>% 
+  as.data.frame() %>%
+  dplyr::select(1) %>%
+  as.vector() 
+otu_names = otu_names[,1] 
+
+otu =
+  readr::read_csv(
+    system.file("extdata", "lugano.otu.table.csv", package = "phylo.lipids"),
+    col_names = T ) %>%
+    as.data.frame() %>%
+    dplyr::select(-1)
+rownames(otu) = otu_names
+
+sam_dat=
+  readr::read_csv(
+    system.file("extdata", "lugano.sample.data.csv", package = "phylo.lipids"),
+    col_names = T ) %>% 
+    as.data.frame()
+rownames(sam_dat) = sam_dat$sample
+
+tax = 
+  readr::read_csv(
+    system.file("extdata", "lugano.tax.table.csv", package = "phylo.lipids"),
+    col_names = T ) %>%
+    as.data.frame() %>%
+    dplyr::select(-1)
+rownames(tax) = otu_names
+
+## build a phyloseq object ----
+PHY= phyloseq::phyloseq (phyloseq::otu_table (as.matrix(otu), taxa_are_rows = TRUE),
+                         phyloseq::tax_table (as.matrix(tax)),
+                         phyloseq::sample_data (sam_dat)
+                         )
+
+#### Processing of DNA data
+
+## Transform OTU data ----
+PHY %>%
+# remove taxa that have less than 40 reads across all samples
+phylo.lipids::trim_taxa_sum (min = 40) %>% 
+# remove taxa that occurr in less than 5 samples
+phylo.lipids::trim_taxa_samp (min = 5, fraction = F) %>%
+# normalize to total dna
+phylo.lipids::norm_dna (dna = sam_dat$`µg.DNA.L-1`) %>%
+# remove eucaryotes and archaea
+phylo.lipids::remove_clades (., c("Chloroplast", "Mitochondria", "Archaea")) -> PHY1
+
+PHY2 = 
+  PHY1 %>%
+  # remove 100 m sample because the corresponsding lipid sample was lost
+  phyloseq::subset_samples (depth != 100)
+
+# test if there are still eukaryotic sequences
+if (class (try (phyloseq::subset_taxa(PHY2, Class=="Chloroplast"))) != "try-error" | 
+    class (try (phyloseq::subset_taxa(PHY2, Family=="Mitochondria"))) != "try-error"
+) { rm(PHY2)
+    rep("ALARM: still containing Eukaryotes!!",6) }
+
+## differentiate between classes of Proteobacteria ----
+PHY2 %>%
+ phylo.lipids::diff_proteo() -> PHY3
+```
+
+&nbsp;
+
+#### First explore the ecological niche distribution
+```{r, echo=TRUE, include=TRUE, warning=TRUE}
+
+## try to find 'k' values that give a good separation of the groups 
+## pay attention to the red ribbons (2 SD error bounds)
+## eventuallt set 'otus = TRUE'
+## use the depth label to reverse scales and mek them numeric
+## 'depth' has to be a column of phy@sam_data
+## use 'count = "sum"' to use the actual reads/concentrations/relative abundance values
+## if 'count = "n"', the NUMBER OF OTUS affiliated with each taxonomic group (e.g. Phylum) will be used,
+## regardless of the abundance of the indivisual otus
+ 
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = T,
+            level = "Phylum",
+            fancy = F,
+            count = "sum"
+            ) -> GG0
+
+GG0$facet_groups
+
+```
+
+Then look at the phylogenetic diversity in each group. 
+
+```{r}
+GG0$facet_pies
+```
+
+Eventually adjust the cutoff value to reduce the number of taxonomic units.  
+You exempt taxa of interest from the cutoff (i.e., always show them) and/or highlight taxa of interest.
+
+```{r}
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = T,
+            level = "Phylum",
+            fancy = F,
+            count = "sum",
+            cutoff = 0.15, ################### 15% cutoff
+            exempt = "Nitrospirae"
+            ) -> GG0
+
+GG0$facet_pies
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = T,
+            level = "Phylum",
+            fancy = F,
+            count = "sum",
+            cutoff = 0.15, # 15% cutoff
+            exempt = c("Nitrospirae","Acidobacteria"), ############ !
+            highlight = c("Nitrospirae","Acidobacteria") ############# !
+            ) -> GG0
+
+GG0$facet_pies
+
+
+```
+
+&nbsp;
+
+#### Highlight certain taxa
+```{r, echo=TRUE, include=TRUE, warning=TRUE}
+## x
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = F,
+            level = "Phylum",
+            fancy = F,
+            count = "sum",
+            highlight = "Nitrospirae",
+            exempt = "Nitrospirae",
+            cutoff = 0.05
+            ) -> GG0
+
+GG0$facet_pies
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = T,
+            level = "Family",
+            fancy = F,
+            count = "sum",
+            cutoff = 1, ############# 100 % cutoff
+            exempt = c("Methylococcaceae","Crenotrichaceae"), ############ !
+            highlight = c("Methylococcaceae","Crenotrichaceae"), ############# !
+            key_col = 1
+            ) -> GG0
+
+GG0$facet_pies
+
+```
+
+
+Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
+
+```{r fig.width=8}
+
+## set fancy = TRUE to make overlay plots
+## It's slow so do not use it on the full data set
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = T,
+            level = "Family", ######################### !
+            fancy = T, ############################### !
+            count = "sum",
+            cutoff = 0.05, 
+            exempt = c("Methylococcaceae","Crenotrichaceae"),
+            prune_groups = c("G3","G5","G21", "G19", "G14"), ### !!!
+            key_col = 2
+            ) -> GG0
+
+GG0$groups_pies_full
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = T,
+            level = "Family",
+            fancy = T,
+            count = "sum",
+            cutoff = 0.05, 
+            exempt = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"),
+            prune_groups = c("G3","G5","G21", "G19", "G14"),
+            highlight = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"),
+            key_col = 2
+            ) -> GG0
+
+
+GG0$groups_pies_full
+
+
+```
+
+
+

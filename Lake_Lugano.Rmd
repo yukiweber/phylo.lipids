@@ -178,7 +178,7 @@ tibble::as.tibble(lipids) %>% knitr::kable(digits = 2)
 # use the cor_phy() function and save the results
 # for information on the function's options, refer to the help page
 phylo.lipids::cor_phy( phy= PHY3, L,
-                       display = c("Subgroup 21"),
+                       display = c("Acidobacteria"),
                        alpha = 0.9,
                        alpha.other = 0.2,
                        col.other = "gray70",
@@ -194,33 +194,6 @@ phylo.lipids::cor_phy( phy= PHY3, L,
 lugano_cor_phy_results$plot
 lugano_cor_phy_results$lipids 
 lugano_cor_phy_results$taxa 
-
-PHY3 %>% 
-   #trim_taxa_sum(10) %>%
-   #tax_glom("Order") %>% 
-   phyloseq::plot_net(type ="samples",
-                      point_alpha= 0.8,
-                      hjust = -1,
-                      point_label = "depth",
-                      color="depth",
-                      maxdist = 0.75) -> net
-net
-PHY3@sam_data
-
-PHY3 %>% 
-   trim_taxa_samp(14) %>%
-   tax_glom("Phylum") %>% 
-   phyloseq::plot_net(type ="taxa",
-                      point_alpha= 0.8,
-                      hjust = -0.2,
-                      point_label = "Phylum",
-                      color="Phylum",
-                      maxdist = 0.75) -> net
-net
-PHY3@sam_data
-
-
-
 ```
 
 &nbsp;
@@ -238,15 +211,13 @@ phylo_lipids( phy = PHY3, L,
               thresh = 0.75,
               method = "pearson",
               cutoff = 0.04,
-              exempt = c("Acidobacteria"),
+              exempt = "Acidobacteria",
               n.col = 3,
               sort.tax = "alpha",
               text.size = 14,
               guide.col = 1
               ) -> lugano_cor_tax_results
 
-
-lugano_cor_tax_results$bars + ggplot2::theme(aspect.ratio = 0.5)
 lugano_cor_tax_results$pies
 lugano_cor_tax_results$table
 lugano_cor_tax_results$summary
@@ -254,7 +225,7 @@ lugano_cor_tax_results$summary
 
 
 #### Diversity of Acidobacteria correlated with each lipid
-```{r lugano_acido_cor_tax, fig.width=8, fig.asp=1, fig.height=8}
+```{r include=FALSE, results='hide', echo=T}
 
 PHY3 %>%
    phyloseq::subset_taxa(Phylum=="Acidobacteria") %>%
@@ -269,7 +240,9 @@ PHY3 %>%
                  text.size = 14
                  ) -> lugano_acido_cor_tax_results
 
-lugano_acido_cor_tax_results$bars + ggplot2::theme(aspect.ratio = 0.5)
+```
+
+```{r lugano_acido_cor_tax, fig.width=8, fig.asp=1, fig.height=8}
 lugano_acido_cor_tax_results$pies
 lugano_acido_cor_tax_results$table
 lugano_acido_cor_tax_results$summary

@@ -3,7 +3,7 @@
 #' @name not_in
 #' @export
 #' @usage %in%
-#' @keywords intern
+#' @keywords internal
 
 '%!in%' <- function(x,y)!('%in%'(x,y))
 

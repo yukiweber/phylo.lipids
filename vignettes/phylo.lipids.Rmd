@@ -1,0 +1,211 @@
+---
+title: "Case study: Lake Lugano"
+author: "Yuki Weber"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+## Comparing bacterial abundance and dicersity with tetraether lipid concentrations in the water column
+##### Published in:   *Yuki Weber, Jaap S. Sinninghe Damsté, Jakob Zopfi, Cindy De Jonge, Adrian Gili, Carsten J. Schubert, Fabio Lepori, Moritz F. Lehmann, Helge Niemann (2018): **"Redox-dependent niche differentiation of tetraether lipid producing bacteria: Evidence for multiple branched GDGT sources in lakes"***
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+ echo = TRUE,
+ include = TRUE,
+ cache = F,
+ warning = FALSE,
+ message = FALSE,
+ dev = ("png")
+ )
+```
+
+### Install and load packages
+```{r, echo=TRUE, include=T, warning=F, eval=T}
+# install devtools if not present and load
+if (!"devtools" %in% rownames(installed.packages())) {
+ install.packages("devtools")
+}
+require(devtools)
+
+# install the phylo.lipids package from GitHub and load
+if (!"phylo.lipids" %in% rownames(installed.packages())) {
+ devtools::install_github("yukiweber/phylo.lipids", ref = "master", build_vignettes = F)
+}
+require(phylo.lipids)
+```
+
+### Load raw data
+```{r, echo=TRUE, include=T, warning=F, eval=T}
+otu_names=
+  readr::read_csv(
+    system.file("extdata", "lugano.otu.table.csv", package = "phylo.lipids"),
+    col_names = T ) %>% 
+  as.data.frame() %>%
+  dplyr::select(1) %>%
+  as.vector() 
+otu_names = otu_names[,1] 
+
+otu =
+  readr::read_csv(
+    system.file("extdata", "lugano.otu.table.csv", package = "phylo.lipids"),
+    col_names = T ) %>%
+    as.data.frame() %>%
+    dplyr::select(-1)
+rownames(otu) = otu_names
+
+sam_dat=
+  readr::read_csv(
+    system.file("extdata", "lugano.sample.data.csv", package = "phylo.lipids"),
+    col_names = T ) %>% 
+    as.data.frame()
+rownames(sam_dat) = sam_dat$sample
+
+tax = 
+  readr::read_csv(
+    system.file("extdata", "lugano.tax.table.csv", package = "phylo.lipids"),
+    col_names = T ) %>%
+    as.data.frame() %>%
+    dplyr::select(-1)
+rownames(tax) = otu_names
+
+## build a phyloseq object ----
+PHY= phyloseq::phyloseq (phyloseq::otu_table (as.matrix(otu), taxa_are_rows = TRUE),
+                         phyloseq::tax_table (as.matrix(tax)),
+                         phyloseq::sample_data (sam_dat)
+                         )
+```
+
+### Processing of meta taxonomic data
+```{r, echo=TRUE, include=T, warning=F, eval=T}
+
+## Transform OTU data ----
+PHY %>%
+# remove taxa that have less than 30 reads across all samples
+phylo.lipids::trim_taxa_sum (min = 40) %>% 
+# remove taxa that occurr in less than 5 samples
+phylo.lipids::trim_taxa_samp (min = 5, fraction = F) %>%
+# normalize to total dna
+phylo.lipids::norm_dna (. , dna = sam_dat$`µg.DNA.L-1`) %>%
+# remove eucaryotes and archaea
+phylo.lipids::remove_clades (., c("Chloroplast", "Mitochondria", "Archaea")) -> PHY1
+
+PHY1 %>%
+# remove 100 m sample because the corresponsding lipid sample was lost
+phyloseq::subset_samples (., depth %!in% 100) -> PHY2
+
+# test if there are still eukaryotic sequences
+if (
+  class (try (phyloseq::subset_taxa(PHY2, Class=="Chloroplast"))) != "try-error" & 
+  class (try (phyloseq::subset_taxa(PHY2, Family=="Mitochondria"))) != "try-error"
+  ) { 
+  stop("still containing Eukaryotes!!")
+}
+
+## differentiate between classes of Proteobacteria ----
+PHY2 %>%
+ phylo.lipids::diff_proteo() -> PHY3
+```
+
+### Load and prepare raw lipid data
+```{r, echo=TRUE, include=TRUE, warning=TRUE}
+## load water column lipid data (i.e., branched glycerol dialkyl glycerol tetraethers: brGDGTs) -----
+SPM =
+readr::read_csv(
+ system.file("extdata", "lugano.SPM.ng.L-1.csv", package = "phylo.lipids"),
+  col_names = T ) %>% 
+ as.data.frame() 
+colnames(SPM) = gsub("[.]","′",   colnames(SPM))
+
+## select brGDGT lipid fraction for correlation ---- 
+## here: sum of all fractions, i.e., total of core lipid, intact polar lipid, 
+## and residual (but hydrolyzable) fractions
+lipids =
+ SPM %>% dplyr::filter (fraction == "total") %>%
+ ## and keep only lipid data columns 
+ dplyr::select (-depth, - fraction)
+```
+
+&nbsp;
+
+### This yields a phyloseq object and a lipid table
+```{r}
+# taxonomy and OTU-specific DNA concentrations
+PHY3
+# lipid concentrations
+tibble::as.tibble(lipids) %>% knitr::kable(digits = 2)
+```
+
+&nbsp;
+
+### Correlation between OTUs and each lipid
+```{r eval=T, echo=T, fig.width=5, include=T, fig.align="left", fig.asp=0.75}
+# brGDGT names (columns)
+bG.major = c("IIIa","IIIa..","IIIa.","IIa", "IIa.","Ia")
+bG.major.1 = gsub("\\.", "′" ,  bG.major) 
+
+# select the major brGDGTs and the sum of all brGDGTs
+lipids %>%
+  dplyr::select(bG.major.1, sum_bG) -> L
+
+# run the correlation
+phylo.lipids::cor_phy(phy= PHY3,
+              lipids = L,
+              display = c("Acidobacteria"),
+              alpha = 0.9,
+              alpha.other = 0.2,
+              col.other = "gray70",
+              colors = "random",
+              luminosity = "dark",
+              width = 0.3,
+              aspect = 1,
+              box.plot = F
+              ) -> COR
+
+# output contains a plot and two data frames
+COR$plot
+COR$lipids 
+COR$taxa 
+
+```
+
+&nbsp;
+
+### Diversity of OTUs correlated with each lipid
+```{r results='hide', eval=T, fig.height=12}
+# brGDGT names (columns)
+bG.major = c("IIIa","IIIa..","IIIa.","IIa", "IIa.","Ia")
+bG.major.1 = gsub("\\.", "′" ,  bG.major) 
+
+# Subset major brGDGTs
+L = lipids %>% dplyr::select(bG.major.1)
+
+# compare all OTUs with correlation coefficent > 0.75
+# subsume taxa < 3% as "other", except Acidobacteria that are alwqys shown
+phylo.lipids::phylo_lipids( phy = PHY3, 
+                            lipids = L,
+                            level = "Phylum",
+                            thresh = 0.75,
+                            method = "pearson",
+                            cutoff = 0.03,
+                            exempt = "Acidobacteria",
+                            n.col = 2,
+                            sort.tax = "alpha",
+                            plot.theme = FALSE,
+                            text.size = 10,
+                            test = F,
+                            test.size = 1000
+                            ) -> Lugano_cor_results
+```
+
+### The output...
+```{r fig.width=6, fig.asp=1, fig.align='left'}
+# contains pie charts, long format data frame, and a text summary
+Lugano_cor_results$pies
+Lugano_cor_results$table
+Lugano_cor_results$summary
+```
+

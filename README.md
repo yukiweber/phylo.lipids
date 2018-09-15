@@ -2,7 +2,7 @@
 
 This R package was developed to investigate quantitative links between lipid biomarker concentration and meta taxonomic (16S rRNA gene) data.
 
-### Version 0.0.0.900 
+### Version 0.0.0.901 
 
 This is a development version and was used to generate some of the results published in:  
 
@@ -14,7 +14,7 @@ More features will be added soon. Please report any bugs to: yuki.t.weber@gmail.
 #### Installation of latest source package
 ```{r}
 install.packages("devtools")
-devtools::install_github("yukiweber/phylo.lipids", build_vignettes = F)
+devtools::install_github("yukiweber/phylo.lipids", ref = "release/0.0.901", build_vignettes = T)
 ```
 
 #### Reproducing published analysis

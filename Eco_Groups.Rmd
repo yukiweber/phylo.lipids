@@ -160,6 +160,31 @@ GG0$legend_only
 
 &nbsp;
 
+#### Highlight certain taxa
+```{r, echo=TRUE, include=TRUE, warning=TRUE}
+## x
+
+plot_groups(phy = PHY3,
+            label = "depth",
+            k=22,
+            otus = F,
+            level = "Phylum",
+            fancy = F,
+            count = "avg",
+            #highlight = "Nitrospirae",
+            exempt = "Nitrospirae",
+            cutoff = 0.3
+            ) -> GG0
+
+GG0$facet_pies
+GG0$facet_groups
+GG0$groups_pies_only
+GG0$legend_only
+
+
+```
+
+
 #### Xxxxxxxx
 ```{r lugano_cor_phy, fig.height=4}
 # x

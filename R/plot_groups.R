@@ -19,8 +19,10 @@ plot_groups = function (phy,
                         ribbon =T, # plot ribbons
                         prune_groups = NULL, # plot only selevted groups
                         count = c("n","avg"), # select count type
-                        fancy = T # plots overlay plots
+                        fancy = T, # plots overlay plots
+                        highlight = "NULL"
                         ) {
+
 
    # cluster groups
    phy %>%
@@ -60,7 +62,6 @@ plot_groups = function (phy,
    y = as.data.frame (phy@tax_table , stringsAsFactors = F) %>%
       dplyr::select(level)
 
-
    # add everything together
    x1 = tibble::as.tibble (y) %>%
     dplyr::select(level) %>% # get taxonomy assignments at the specified level
@@ -92,12 +93,12 @@ plot_groups = function (phy,
          # relative counts depending on the count type
          dplyr::mutate(rel.cnt = get(count[1]) / sum(get(count[1])))
 
-      # get the below-cutoff taxa
-      a[level][which(a$rel.cnt < cutoff), ] -> cut
+      # get the below-cutoff taxa as character vector
+      a[[level]][which(a$rel.cnt < cutoff) ] -> cut
       # only keep taxa in the cutoff list that are not in exempt
       cut = cut[which(cut %!in% exempt)]
       # replace tax assignements of below cutoff taxa with 'other'
-      x2[level][which(x2$group == i & x2[[level]] %in% cut[[1]] ), ] = "other"
+      x2[level][which(x2$group == i & x2[[level]] %in% cut ), ] = "other"
    }
 
    # replace NA with 'ukn.'
@@ -112,9 +113,11 @@ plot_groups = function (phy,
    # make taxonomy a factor and re-level ----
    tax = as.factor(x3[[level]])
    # put expemt taxa on the top
+   # if they are present after cutoff
    if (is.character(exempt)) {
       for(i in rev(exempt)) {
-         tax = relevel(tax , i) } }
+         if ( i %in% levels(tax) ){
+            tax = relevel(tax , i) } } }
    # show 'other' second
    if ("other" %in% levels(tax) ) {
       tax = relevel(tax ,"other") }
@@ -142,6 +145,15 @@ plot_groups = function (phy,
    # add color assignements to otu data
    x3 %>%
       dplyr::left_join(ptb, by= paste(level)) -> x3
+
+   # if highlight was defined
+   # and all provided taxa are valid at the given level
+   # replace all other tax colors with gray
+   if (highlight[1] != "NULL" &
+       sum ( highlight %in% y[[level]]) == length(highlight)) {
+      x3["col"][which(
+         ! x3[[level]] %in% c( highlight, "other" , "ukn.") ), ] = "gray95"
+   }
 
 
    ## THEMES ----
@@ -217,7 +229,7 @@ plot_groups = function (phy,
    }
    }  # END of fancy branch
 
-   ## color values and legend ----
+   ## color legend ----
    # get color values of ALL taxa
    x3 %>% # all data
    dplyr::group_by_(level) %>%

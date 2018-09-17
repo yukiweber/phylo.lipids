@@ -192,42 +192,6 @@ GG0$facet_pies
 
 &nbsp;
 
-#### Highlight certain taxa
-```{r, echo=TRUE, include=TRUE, warning=TRUE}
-## x
-
-plot_groups(phy = PHY3,
-            label = "depth",
-            k=22,
-            otus = F,
-            level = "Phylum",
-            fancy = F,
-            count = "sum",
-            highlight = "Nitrospirae",
-            exempt = "Nitrospirae",
-            cutoff = 0.05
-            ) -> GG0
-
-GG0$facet_pies
-
-plot_groups(phy = PHY3,
-            label = "depth",
-            k=22,
-            otus = T,
-            level = "Family",
-            fancy = F,
-            count = "sum",
-            cutoff = 1, ############# 100 % cutoff
-            exempt = c("Methylococcaceae","Crenotrichaceae"), ############ !
-            highlight = c("Methylococcaceae","Crenotrichaceae"), ############# !
-            key_col = 1
-            ) -> GG0
-
-GG0$facet_pies
-
-```
-
-
 Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
 
 ```{r fig.width=8}

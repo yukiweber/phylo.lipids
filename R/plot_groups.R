@@ -319,8 +319,8 @@ plot_groups = function (phy,
                   taxa_groups = NULL,
                   ncol = ncol,
                   key_col = key_col
-                  ) +
-         blank_theme
+                  )
+   Fp = Fp$pie + blank_theme
 
 
    ### outputs ----
@@ -336,7 +336,8 @@ plot_groups = function (phy,
          ggplotify::as.ggplot() -> A
 
       ## as a single figure with legend
-      gridExtra::grid.arrange(A,leg) -> B
+      gridExtra::grid.arrange(A,leg) %>%
+         ggplotify::as.ggplot() -> B
             }
 
    # make a summary stat list ----
@@ -349,7 +350,8 @@ plot_groups = function (phy,
          dplyr::summarise(n = n(),
                           sum = sum(sum)) %>%
         dplyr::mutate(rel.n = n/sum(n),
-                      rel.sum = sum/sum(sum))
+                      rel.sum = sum/sum(sum),
+                      group = i)
    }
 
    ## return a list ----

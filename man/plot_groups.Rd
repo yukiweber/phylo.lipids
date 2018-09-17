@@ -8,7 +8,8 @@ plot_groups(phy, level = "Phylum", label = "NULL", k = 10,
   cutoff = 0.03, exempt = FALSE, otus = T, ribbon = T,
   prune_groups = NULL, count = c("n", "sum"), fancy = T,
   highlight = "NULL", standardize = c("sum", "max"), ncol = 5,
-  key_col = 2)
+  key_col = 2, clust = c("ward.D2", "ward.D", "single", "complete",
+  "average", "mcquitty", "median", "centroid"))
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
@@ -25,6 +26,8 @@ or a vector of same lengh as observations}
 \item{ncol}{Number of columns in the arranged plots/facets}
 
 \item{key_col}{Number of columns of the color key}
+
+\item{clust}{Hclust method passed to hclust() in group_tax()}
 }
 \value{
 a summary plot

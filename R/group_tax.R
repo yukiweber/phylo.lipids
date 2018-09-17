@@ -7,15 +7,18 @@
 #' Overrides 'h' setting if provided (i.e., numeric).
 #' @param dist Distance matrix type passed to 'dist()' to be used in clustering
 #' @param clust Hclust method passed to 'hclust()'
+#' @param standardize Method of standardization of the otu abundances,
+#' either to the sum or the maximum across all samples
 #' @export
 #' @examples
 #' @return A list with i elements, containing the OTU/taxa names in the i-th group
 
 group_tax = function(phy,
                      h = FALSE,
-                     k = 20,
+                     k = FALSE,
                      dist = c( "euclidean","bray","..."),
-                     clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid")
+                     clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid"),
+                     standardize = c("sum","max")
                      ) {
 
    if (is.numeric(h)==T & is.numeric(k)==T){stop("Provide either h or k to cut the cluster tree!")}
@@ -26,7 +29,25 @@ group_tax = function(phy,
       otu = tibble::as.tibble(as.data.frame(phy@otu_table, strngsAsFactors = F))
 
       # make PROFILES
-      otu = sapply(otu,`/`,rowSums(otu)) ### profiled PTU abundances
+      # otu = sapply(otu,`/`,rowSums(otu)) ### deprecated as it is done in the step before
+
+
+      # standardize abundances of each otu relative to  ----
+      # the max value across all samples
+      if (standardize[1] == "max") {
+         otu =
+            as.data.frame(
+               lapply ( otu , `/` , # apply to each row
+                       apply(otu, 1, max) # max values in reach row (otu)
+                     )
+            )
+      }
+      # OR the abundance sum across all samples
+      if (standardize[1] == "sum") {
+         otu = as.data.frame(sapply(otu,`/`,rowSums(otu)))
+      }
+
+
 
       # do the clustering
       hc = hclust( dist(otu, method = dist[1] ), method = clust[1])

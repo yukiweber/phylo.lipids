@@ -8,10 +8,9 @@
 #' @param otus display individual otus?
 #' @param ribbon Plot error bounds (+/- 2*SD)
 #' @param ncol Number of columns in facets
+#' @param is.numeric.label If TRUE, force coertion of labels to numeric
 #' @export
-#' @examples
 #' @return ggplot line plot
-#' @keywords clustering
 
 # x character vector with otu names
 plot_a_group = function (phy,
@@ -19,11 +18,12 @@ plot_a_group = function (phy,
                          label = "NULL",
                          otus = TRUE,
                          ribbon = TRUE,
-                         ncol = 5
+                         ncol = 5,
+                         is.numeric.label = F
                          ) {
 
    # check if taxa names are valid
-   if (mean(Reduce(c, taxnames) %in% phyloseq::taxa_names(phy))!=1) {
+   if (mean(Reduce(c, taxnames) %in% phyloseq::taxa_names(phy)) != 1) {
       stop("wrong taxa names provided!") }
 
    # check if label value is valid
@@ -79,7 +79,7 @@ plot_a_group = function (phy,
       phy@sam_data[[
          grep(label[1], colnames(phy@sam_data), ignore.case = T, value = T)
          ]]
-      ) == T ) {
+      ) == T || is.numeric.label == T ) {
       OT1$sample = as.numeric(OT1$sample)
    }
 

@@ -96,28 +96,31 @@ PHY= phyloseq::phyloseq (phyloseq::otu_table (as.matrix(otu), taxa_are_rows = TR
 ## Transform OTU data ----
 PHY %>%
 # remove taxa that have less than 40 reads across all samples
-phylo.lipids::trim_taxa_sum (min = 40) %>% 
+phylo.lipids::trim_taxa_sum (min = 50) %>% 
 # remove taxa that occurr in less than 5 samples
-phylo.lipids::trim_taxa_samp (min = 5, fraction = F) %>%
+phylo.lipids::trim_taxa_samp (min = 4, fraction = F) -> PHY01
+
+
+PHY01 %>%
+   remove_clades ( c("Chloroplast", "Mitochondria", "Archaea")) %>%
+   norm_dna(relative = T) %>%
+   diff_proteo() -> PHY_rel
+
+
 # normalize to total dna
+PHY01 %>%
 phylo.lipids::norm_dna (dna = sam_dat$`µg.DNA.L-1`) %>%
 # remove eucaryotes and archaea
-phylo.lipids::remove_clades (., c("Chloroplast", "Mitochondria", "Archaea")) -> PHY1
-
-PHY2 = 
-  PHY1 %>%
-  # remove 100 m sample because the corresponsding lipid sample was lost
-  phyloseq::subset_samples (depth != 100)
+phylo.lipids::remove_clades (., c("Chloroplast", "Mitochondria", "Archaea")) %>% 
+## differentiate between classes of Proteobacteria  
+phylo.lipids::diff_proteo() -> PHY3
 
 # test if there are still eukaryotic sequences
-if (class (try (phyloseq::subset_taxa(PHY2, Class=="Chloroplast"))) != "try-error" | 
-    class (try (phyloseq::subset_taxa(PHY2, Family=="Mitochondria"))) != "try-error"
+if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-error" | 
+    class (try (phyloseq::subset_taxa(PHY3, Family=="Mitochondria"))) != "try-error"
 ) { rm(PHY2)
     rep("ALARM: still containing Eukaryotes!!",6) }
 
-## differentiate between classes of Proteobacteria ----
-PHY2 %>%
- phylo.lipids::diff_proteo() -> PHY3
 ```
 
 &nbsp;
@@ -134,18 +137,27 @@ PHY2 %>%
 ## if 'count = "n"', the NUMBER OF OTUS affiliated with each taxonomic group (e.g. Phylum) will be used,
 ## regardless of the abundance of the indivisual otus
  
+P = PHY_rel
 
-plot_groups(phy = PHY3,
+plot_groups(phy = P,
             label = "Depth",
-            k=22,
+            k = 19,
+            #h=1.5,
             otus = T,
             level = "Phylum",
             fancy = F,
             count = "sum",
-            ncol = 10
+            ncol = 10,
+            clust = "ward.D2",
+            standardize = "sum"
             ) -> GG0
 
+
 GG0$facet_groups
+
+# save the group list
+GG0$group_dat -> g
+
 
 ```
 
@@ -160,75 +172,94 @@ You exempt taxa of interest from the cutoff (i.e., always show them) and/or high
 
 ```{r}
 
-plot_groups(phy = PHY3,
+plot_groups(phy = P,
+            use_groups = g, ############# use the groups saved previously
             label = "depth",
-            k=22,
             otus = T,
             level = "Phylum",
             fancy = F,
             count = "sum",
-            cutoff = 0.15, ################### 15% cutoff
+            cutoff = 0.05, ################### 5% cutoff
             exempt = "Nitrospirae"
-            ) -> GG0
+            ) -> GG1
 
-GG0$facet_pies
 
-plot_groups(phy = PHY3,
+plot_groups(phy = P,
             label = "depth",
-            k=22,
+            use_groups = g,
             otus = T,
             level = "Phylum",
             fancy = F,
             count = "sum",
-            cutoff = 0.15, # 15% cutoff
-            exempt = c("Nitrospirae","Acidobacteria"), ############ !
-            highlight = c("Nitrospirae","Acidobacteria") ############# !
-            ) -> GG0
+            cutoff = 1, # 100% cutoff
+            exempt = c("Nitrospirae","Gammaproteobacteria","Bacteroidetes"), ############ !
+            highlight = c("Nitrospirae","Gammaproteobacteria", "Bacteroidetes") ############# !
+            ) -> GG2
 
-GG0$facet_pies
+
+GG1$facet_pies
+GG2$facet_pies
 
 
 ```
 
 &nbsp;
 
-Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
+Search for taxa of interest at lower taxonomic levels
 
 ```{r}
+plot_groups(phy = P,
+            label = "depth",
+            use_groups = g,
+            otus = T,
+            level = "Family",
+            fancy = F,
+            count = "sum",
+            cutoff = 1,
+            exempt = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"), ############ !
+            highlight = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis") ############# !
+            ) -> GG2
+
+
+
+GG2$facet_pies
+
+
+```
+
+
+&nbsp;
+
+Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
+
+```{r include=F}
 
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set
 
-plot_groups(phy = PHY3,
-            label = "depth",
-            k=22,
-            otus = T,
-            level = "Family", ######################### !
-            fancy = T, ############################### !
-            count = "sum",
-            cutoff = 0.05, 
-            exempt = c("Methylococcaceae","Crenotrichaceae"),
-            prune_groups = c("G3","G5","G21", "G19", "G14"), ### !!!
-            key_col = 2
-            ) -> GG1
+G_sel = paste0("G",
+               c(3, 5, 13, 15)
+               )
 
-plot_groups(phy = PHY3,
+int_tax = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis")
+
+plot_groups(phy = P,
             label = "depth",
-            k=22,
+            use_groups = g,
             otus = T,
             level = "Family",
             fancy = T,
             count = "sum",
-            cutoff = 0.05, 
-            exempt = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"),
-            prune_groups = c("G3","G5","G21", "G19", "G14"),
-            highlight = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"),
+            cutoff = 0.03, 
+            exempt = int_tax, ######## !
+            prune_groups = G_sel, ####### !
+            # highlight = int_tax,
             key_col = 2
-            ) -> GG2
+            ) -> GG4
 ```
 ```{r}
-GG1$groups_pies_full
-GG2$groups_pies_full
+
+GG4$groups_pies_full
 ```
 
 

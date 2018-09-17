@@ -20,7 +20,7 @@ plot_pie = function(x, # long format otu table with col, tax ('level')
                     count = c("n","sum"),
                     level = "Phylum",
                     taxa_groups = NULL, # a list of char vectors containing grou taxa names
-                    ncol =5,
+                    ncol = 5,
                     key_col = 2
                     ) {
 

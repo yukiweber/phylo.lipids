@@ -9,8 +9,14 @@
 #' @param level taxonomic level
 #' @param ncol Number of columns in the arranged plots/facets
 #' @param key_col Number of columns of the color key
-#'
+#' @param clust Hclust method passed to hclust() in group_tax()
+#' @param use_groups Use a previously generated list of otu groups
+#' @param prune_groups A character vector with the grop names to be displayed. If NULL, all are shown.
+#' @param highlight Taxa to be highlighted
+#' @param standardize Method of standardization of the otu abundances,
+#' either to the sum or the maximum across all samples
 #' @export
+#' @usage
 #' @examples
 #' @return a summary plot
 
@@ -18,7 +24,9 @@
 plot_groups = function (phy,
                         level="Phylum",
                         label ="NULL", # alternative labe to sample names
+                        use_groups = F,
                         k = 10,
+                        h = F,
                         cutoff = 0.03,
                         exempt = FALSE,
                         otus = T, # plot individual otus
@@ -28,8 +36,9 @@ plot_groups = function (phy,
                         fancy = T, # plots overlay plots
                         highlight = "NULL",
                         standardize = c("sum","max"),
-                        ncol = 5,
-                        key_col = 2
+                        ncol = NULL,
+                        key_col = 2,
+                        clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid")
                         ) {
 
 
@@ -46,48 +55,53 @@ plot_groups = function (phy,
       stop ("Label not found in phy@sam_data!")
       }
 
-   # cluster groups
-   phy %>%
-      group_tax(k = k) -> g0
-   g = g0
 
-   # if groups are pecified, prune these groups from the list
+
+   # cluster groups ----
+   # if no groups were provided
+   if (is.list(use_groups) == F) {
+   phy %>%
+      group_tax(k = k,
+                h = h,
+                clust = clust,
+                standardize = standardize) -> g
+   }
+
+   # otherwise use provided group list
+   if (is.list(use_groups) == T) {
+      g = use_groups
+   }
+
+   # if groups are provided, prune these groups from the list
    if (is.null(prune_groups) == F ) {
-      g = g0[prune_groups]
+      g = g[prune_groups]
       }
+
+   # set ncol to default
+   if ( is.null(ncol) == T) {
+      ncol = length(g)
+   }
 
    ## extract data from phyloseq object
    # OTU table (rows = taxa)
-   x = as.data.frame (phy@otu_table, stringsAsFactors = F)
+   x = as.data.frame (phy@otu_table, stringsAsFactors = F) %>%
+      tibble::as.tibble()
    colnames(x) -> sam_names
 
-   # if alternative label was defined
+
+      # if alternative label was defined
    # replace sample names with sample data (e.g. "depth)
    # use stringr to ignore case
    sam_var="sample"
    if( LAB == T) {
       sam_var = label[1]
       colnames(x) =
-         phy@sam_data[, grep( label[1], colnames(phy@sam_data),ignore.case = T)][[1]]
+         phy@sam_data[[grep( label[1], colnames(phy@sam_data),ignore.case = T)]]
    }
+
 
    # compute abundance SUMs across all samples ----
    sum = Reduce('+', x) # / ncol(x) # prev: averages
-
-   # standardize abundances of each otu relative to  ----
-   # the max value across all samples
-   if (standardize[1] == "max") {
-      x =
-         as.data.frame(
-            lapply ( x , `/` , # apply to each row
-                    apply(x, 1, max) # max values in reach row (otu)
-                  )
-         )
-   }
-   # OR the abundance sum across all samples
-   if (standardize[1] == "sum") {
-      x = as.data.frame(sapply(x,`/`,rowSums(x)))
-   }
 
    # add the SUMs and otu names to the DF
    x = x %>%
@@ -101,7 +115,7 @@ plot_groups = function (phy,
    y = as.data.frame (phy@tax_table , stringsAsFactors = F) %>%
       dplyr::select(level)
 
-   # add everything together
+   # add everything together ----
    x1 = tibble::as.tibble (y) %>%
     dplyr::select(level) %>% # get taxonomy assignments at the specified level
     dplyr::mutate (otu = rownames (.)) %>% # add otu column
@@ -239,7 +253,8 @@ plot_groups = function (phy,
                    phy = phy,
                    label = label,
                    otus = otus,
-                   ribbon = ribbon) +
+                   ribbon = ribbon,
+                   is.numeric.label = num) +
       blank_theme_x +
       ggplot2::labs(title = i)   -> a
 
@@ -308,7 +323,8 @@ plot_groups = function (phy,
                    label = label,
                    otus = otus,
                    ribbon = ribbon,
-                   ncol = ncol) +
+                   ncol = ncol,
+                   is.numeric.label = num) +
          blank_theme_x
 
    Fp =

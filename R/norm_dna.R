@@ -11,7 +11,7 @@
 #' @examples
 #' @family Main functions
 
-norm_dna = function(phy, dna, relative = F) {
+norm_dna = function(phy, dna = 1, relative = T) {
   # make relative abundances
   x = phyloseq::transform_sample_counts(phy, function (x) x / sum (x))
   # get otu table and modify

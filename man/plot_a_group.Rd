@@ -29,4 +29,3 @@ ggplot line plot
 \description{
 helper function: plots standardized otu abundances
 }
-\keyword{clustering}

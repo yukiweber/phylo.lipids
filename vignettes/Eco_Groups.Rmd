@@ -194,7 +194,7 @@ GG0$facet_pies
 
 Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
 
-```{r fig.width=8}
+```{r}
 
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set
@@ -210,9 +210,7 @@ plot_groups(phy = PHY3,
             exempt = c("Methylococcaceae","Crenotrichaceae"),
             prune_groups = c("G3","G5","G21", "G19", "G14"), ### !!!
             key_col = 2
-            ) -> GG0
-
-GG0$groups_pies_full
+            ) -> GG1
 
 plot_groups(phy = PHY3,
             label = "depth",
@@ -226,12 +224,11 @@ plot_groups(phy = PHY3,
             prune_groups = c("G3","G5","G21", "G19", "G14"),
             highlight = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"),
             key_col = 2
-            ) -> GG0
-
-
-GG0$groups_pies_full
-
-
+            ) -> GG2
+```
+```{r}
+GG1$groups_pies_full
+GG2$groups_pies_full
 ```
 
 

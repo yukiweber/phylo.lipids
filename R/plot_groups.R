@@ -331,12 +331,14 @@ plot_groups = function (phy,
    if (fancy==T) {
       # plots only
       gridExtra::grid.arrange(grobs = c(L),
-                              ncol = ncol
+                              ncol = ncol,
+                              newpage = F
                               ) %>%
          ggplotify::as.ggplot() -> A
 
       ## as a single figure with legend
-      gridExtra::grid.arrange(A,leg) %>%
+      gridExtra::grid.arrange(A,leg,
+                              newpage = F) %>%
          ggplotify::as.ggplot() -> B
             }
 
@@ -351,7 +353,8 @@ plot_groups = function (phy,
                           sum = sum(sum)) %>%
         dplyr::mutate(rel.n = n/sum(n),
                       rel.sum = sum/sum(sum),
-                      group = i)
+                      group = i) %>%
+        dplyr::select(-sum)
    }
 
    ## return a list ----

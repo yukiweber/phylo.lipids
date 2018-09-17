@@ -26,6 +26,10 @@ plot_a_group = function (phy,
    if (mean(Reduce(c, taxnames) %in% phyloseq::taxa_names(phy))!=1) {
       stop("wrong taxa names provided!") }
 
+   # check if label value is valid
+   if(!label[1] %in% colnames(P@sam_data)){
+      stop ("Label not found in phy@sam_data!") }
+
    P = phy
 
    # prune all taxa in taxnames
@@ -107,7 +111,9 @@ plot_a_group = function (phy,
          }
 
    # if observations are depths and numeric, reverse scale
-   if(label[1] == "depth" & is.numeric(OT1$sample) == TRUE) {
+   if(
+      stringr::str_detect(label[1], stringr::regex( "depth",  ignore_case = TRUE) )
+      & is.numeric(OT1$sample) == TRUE) {
       p = p + ggplot2::scale_x_reverse(expand = c(0,0),
                                        limits = c(max(OT1$sample), 0))
       }

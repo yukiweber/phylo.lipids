@@ -4,7 +4,7 @@
 \alias{plot_pie}
 \title{helper function: Plots taxonomy pie chart}
 \usage{
-plot_pie(x, count = c("n", "avg"), level = "Phylum",
+plot_pie(x, count = c("n", "sum"), level = "Phylum",
   taxa_groups = NULL, ncol = 5, key_col = 2)
 }
 \arguments{
@@ -25,7 +25,7 @@ plot_pie(x, count = c("n", "avg"), level = "Phylum",
 \item{key_col}{Number of columns of the color key}
 }
 \value{
-ggplot pie chart
+ggplot pie chart, and a summary table
 }
 \description{
 helper function: Plots taxonomy pie chart

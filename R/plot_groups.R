@@ -33,6 +33,19 @@ plot_groups = function (phy,
                         ) {
 
 
+   # input checks ----
+
+   # check if label value is valid
+   # and set a flag 'LAB'
+   LAB = F
+   if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+                           stringr::regex(label[1], ignore_case = TRUE )
+                           ) == T) {
+      LAB = T
+   } else {
+      stop ("Label not found in phy@sam_data!")
+      }
+
    # cluster groups
    phy %>%
       group_tax(k = k) -> g0
@@ -50,11 +63,12 @@ plot_groups = function (phy,
 
    # if alternative label was defined
    # replace sample names with sample data (e.g. "depth)
+   # use stringr to ignore case
    sam_var="sample"
-   if(label[1] %in% colnames(phy@sam_data)){
-         colnames(x) = phy@sam_data[[label]]
-         sam_names = phy@sam_data[[label]]
-         sam_var = label[1]
+   if( LAB == T) {
+      sam_var = label[1]
+      colnames(x) =
+         phy@sam_data[, grep( label[1], colnames(phy@sam_data),ignore.case = T)][[1]]
    }
 
    # compute abundance SUMs across all samples ----
@@ -234,7 +248,8 @@ plot_groups = function (phy,
          plot_pie(x = .,
                   taxa_groups = g[[i]],
                   level = level,
-                  count = count[1]) +
+                  count = count[1]) -> bb
+      bb$pie +
          blank_theme +
          ggplot2::guides(fill=F) -> b
 
@@ -280,11 +295,10 @@ plot_groups = function (phy,
    return(legend)
    }
 
-   # extract legend
-   dd = g_legend(d)
-   # convert to ggplot
-   ggplotify::as.ggplot(dd) -> D
-   ggpubr::as_ggplot(dd) -> D1
+   # extract legend ----
+   leg = g_legend(d) %>%
+      # convert to ggplot
+      ggplotify::as.ggplot()
 
 
    ### simple facet wraps ----
@@ -322,30 +336,32 @@ plot_groups = function (phy,
          ggplotify::as.ggplot() -> A
 
       ## as a single figure with legend
-      # get the table grob from legend
-      dd$grobs[1] -> ddd
-      # place it at the end of grob list
-      L1 = c(L,ddd)
-      # plot together
-      gridExtra::grid.arrange(
-         ggplotify::as.grob(
-            gridExtra::grid.arrange(grobs = L1,
-                                    ncol = ncol
-                                    )
-            )
-         ) %>%
-         ggplotify::as.ggplot() -> B
-      }
+      gridExtra::grid.arrange(A,leg) -> B
+            }
 
+   # make a summary stat list ----
+   summary = list()
+   for (i in names(g)) {
+     summary[[i]] =
+       x3 %>%
+         dplyr::filter(group == i) %>%
+         dplyr::group_by_(level) %>%
+         dplyr::summarise(n = n(),
+                          sum = sum(sum)) %>%
+        dplyr::mutate(rel.n = n/sum(n),
+                      rel.sum = sum/sum(sum))
+   }
 
+   ## return a list ----
    return(
       list(
          "groups_pies_only" = A,
-         "legend_only" = D,
+         "legend_only" = leg,
          "groups_pies_full" = B,
          "group_dat" = g,
          "facet_pies" = Fp,
-         "facet_groups" = Fg
+         "facet_groups" = Fg,
+         "summary" = summary
          )
    )
 }

@@ -12,12 +12,12 @@
 #' @param key_col Number of columns of the color key
 #' @export
 #' @examples
-#' @return ggplot pie chart
+#' @return ggplot pie chart, and a summary table
 #' @keywords visualization
 
 
 plot_pie = function(x, # long format otu table with col, tax ('level')
-                    count = c("n","avg"),
+                    count = c("n","sum"),
                     level = "Phylum",
                     taxa_groups = NULL, # a list of char vectors containing grou taxa names
                     ncol =5,
@@ -70,6 +70,13 @@ plot_pie = function(x, # long format otu table with col, tax ('level')
          title = paste0(level," (", count[1], ")"),
          ncol = key_col)
          ) -> p
-   return(p)
+   return(
+      list(
+         "pie" = p,
+         "tab" = x1
+         )
+   )
+
 }
+
 

@@ -26,7 +26,16 @@ plot_a_group = function (phy,
    if (mean(Reduce(c, taxnames) %in% phyloseq::taxa_names(phy))!=1) {
       stop("wrong taxa names provided!") }
 
-   P = phy
+   # check if label value is valid
+   # and set a flag 'LAB'
+   LAB = F
+   if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+                           stringr::regex(label[1], ignore_case = TRUE )
+                           ) == T) {
+      LAB = T
+   } else {
+      stop ("Label not found in phy@sam_data!")
+      }
 
    # prune all taxa in taxnames
    phyloseq::prune_taxa(Reduce(c, taxnames), phy) -> P
@@ -39,8 +48,14 @@ plot_a_group = function (phy,
    OT$otu=rownames(OT)
 
    # replace sample names sample data (e.g. "depth)
-   if(label[1] %in% colnames(P@sam_data)){
-         colnames(OT)[1:ncol(OT)-1] = P@sam_data[[label]] }
+   if(LAB == T){
+         colnames(OT)[1:ncol(OT)-1] =
+            P@sam_data[[
+               grep(label[1],
+                    colnames(P@sam_data),
+                    ignore.case = T,
+                    value = T)]]
+         }
 
    ## assign groups to otus
    OT$group=""
@@ -60,7 +75,11 @@ plot_a_group = function (phy,
       tibble::as.tibble() -> OT1
 
    # if alternative labels are numeric, coerce to muneric
-   if (is.numeric(phy@sam_data[[label[1]]]) == T) {
+   if (is.numeric(
+      phy@sam_data[[
+         grep(label[1], colnames(phy@sam_data), ignore.case = T, value = T)
+         ]]
+      ) == T ) {
       OT1$sample = as.numeric(OT1$sample)
    }
 
@@ -87,7 +106,7 @@ plot_a_group = function (phy,
       p = p +
          ggplot2::geom_path(color="gray30",
                             size = 0.3,
-                            alpha = 0.5)
+                            alpha = 0.4)
    }
 
    # mean line
@@ -95,23 +114,27 @@ plot_a_group = function (phy,
       ggplot2::stat_summary(fun.y="mean",
                             geom = "line",
                             ggplot2::aes(group = 1),
-                            size=1.5,
+                            size=1.2,
                             color="red") +
       #ggplot2::coord_cartesian(ylim=c(0, 1), expand = c(0,0)) +
       ggplot2::scale_y_continuous(expand = c(0,0))+
       ggplot2::coord_flip(ylim = c(0, max(OT1$abundance)), clip = "on")
 
    # if another label was specified
-   if(label[1] %in% colnames(P@sam_data)){
+   if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+                              stringr::regex(label[1], ignore_case = TRUE )
+                              ) == T) {
          p = p + ggplot2::xlab(label=label)
          }
 
    # if observations are depths and numeric, reverse scale
-   if(label[1] == "depth" & is.numeric(OT1$sample) == TRUE) {
+   if(
+      stringr::str_detect(label[1], stringr::regex( "depth",  ignore_case = TRUE) ) == T
+      & is.numeric(OT1$sample) == TRUE) {
       p = p + ggplot2::scale_x_reverse(expand = c(0,0),
                                        limits = c(max(OT1$sample), 0))
       }
-
+p
    p + ggplot2::ylab(label="standardized abundacne") -> p
 
    # if a list was provided facet by groups

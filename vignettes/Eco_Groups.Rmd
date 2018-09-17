@@ -136,12 +136,13 @@ PHY2 %>%
  
 
 plot_groups(phy = PHY3,
-            label = "depth",
+            label = "Depth",
             k=22,
             otus = T,
             level = "Phylum",
             fancy = F,
-            count = "sum"
+            count = "sum",
+            ncol = 10
             ) -> GG0
 
 GG0$facet_groups

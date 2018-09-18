@@ -41,21 +41,25 @@ plot_a_group = function (phy,
    phyloseq::prune_taxa(Reduce(c, taxnames), phy) -> P
 
    # get otu table
-   as.data.frame(P@otu_table, strngsAsFactors = F) -> otu
+   as.data.frame(unclass(P@otu_table), strngsAsFactors = F) -> otu
    # standardize abundances
    OT = as.data.frame(sapply(otu,`/`,rowSums(otu)))
-   # add otu column
-   OT$otu=rownames(OT)
+
+   # get sam_data
+   # class 'phyloseq may cause 'subset out of bound' error >> unclass
+   s = as.data.frame ( unclass( P@sam_data), stringsAsFactors = F )
 
    # replace sample names sample data (e.g. "depth)
+   sam_var="sample"
    if(LAB == T){
-         colnames(OT)[1:ncol(OT)-1] =
-            P@sam_data[[
-               grep(label[1],
-                    colnames(P@sam_data),
-                    ignore.case = T,
-                    value = T)]]
-         }
+      sam_var = label
+      colnames(OT) =
+         s[[grep(label[1], colnames(s), ignore.case = T, value = T)]]
+      sam_labs = s[[grep(label[1], colnames(s), ignore.case = T, value = T)]]
+      }
+
+   # add otu column to otu table
+   OT$otu=rownames(OT)
 
    ## assign groups to otus
    OT$group=""
@@ -71,16 +75,12 @@ plot_a_group = function (phy,
 
    # gather ata
    OT %>%
-      tidyr::gather(key = "sample", value = "abundance", -otu, -group) %>%
+      tidyr::gather(key = !!sam_var, value = "abundance", -otu, -group) %>%
       tibble::as.tibble() -> OT1
 
    # if alternative labels are numeric, coerce to muneric
-   if (is.numeric(
-      phy@sam_data[[
-         grep(label[1], colnames(phy@sam_data), ignore.case = T, value = T)
-         ]]
-      ) == T || is.numeric.label == T ) {
-      OT1$sample = as.numeric(OT1$sample)
+   if (is.numeric(sam_labs) || is.numeric.label == T ) {
+      OT1[[sam_var]] = as.numeric(OT1[[sam_var]])
    }
 
    # factorize groups to preserve order
@@ -88,7 +88,7 @@ plot_a_group = function (phy,
 
    # initialize a plot
    OT1 %>%
-   ggplot2::ggplot( ggplot2::aes(y= abundance, x = sample, group=otu)) -> p
+   ggplot2::ggplot( ggplot2::aes_string(y= "abundance", x = sam_var, group =" otu")) -> p
 
    # plus/minus SD Ribbon
    if (ribbon == TRUE) {
@@ -128,13 +128,12 @@ plot_a_group = function (phy,
          }
 
    # if observations are depths and numeric, reverse scale
-   if(
-      stringr::str_detect(label[1], stringr::regex( "depth",  ignore_case = TRUE) ) == T
-      & is.numeric(OT1$sample) == TRUE) {
+   if(length(grep("depth", sam_var)) >= 1
+      & is.numeric(OT1[[sam_var]]) == TRUE) {
       p = p + ggplot2::scale_x_reverse(expand = c(0,0),
                                        limits = c(max(OT1$sample), 0))
       }
-p
+
    p + ggplot2::ylab(label="standardized abundacne") -> p
 
    # if a list was provided facet by groups

@@ -4,12 +4,12 @@
 \alias{plot_groups}
 \title{Plots vertical profiles of OTU groups with taxonomy summary}
 \usage{
-plot_groups(phy, level = "Phylum", label = "NULL", k = 10,
-  cutoff = 0.03, exempt = FALSE, otus = T, ribbon = T,
-  prune_groups = NULL, count = c("n", "sum"), fancy = T,
-  highlight = "NULL", standardize = c("sum", "max"), ncol = 5,
-  key_col = 2, clust = c("ward.D2", "ward.D", "single", "complete",
-  "average", "mcquitty", "median", "centroid"))
+plot_groups(phy, level = "Phylum", label = "NULL", use_groups = F,
+  k = 10, h = F, cutoff = 0.03, exempt = FALSE, otus = T,
+  ribbon = T, prune_groups = NULL, count = c("n", "sum"),
+  fancy = T, highlight = "NULL", standardize = c("sum", "max"),
+  ncol = NULL, key_col = 2, clust = c("ward.D2", "ward.D", "single",
+  "complete", "average", "mcquitty", "median", "centroid"))
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
@@ -19,9 +19,18 @@ plot_groups(phy, level = "Phylum", label = "NULL", k = 10,
 \item{label}{A column of 'phy'at'samdata' that is used to label observations (character string),
 or a vector of same lengh as observations}
 
+\item{use_groups}{Use a previously generated list of otu groups}
+
 \item{cutoff}{cutoff abundance for assignment of 'other'}
 
 \item{exempt}{character vector of taxa exempt from cutoff}
+
+\item{prune_groups}{A character vector with the grop names to be displayed. If NULL, all are shown.}
+
+\item{highlight}{Taxa to be highlighted}
+
+\item{standardize}{Method of standardization of the otu abundances,
+either to the sum or the maximum across all samples}
 
 \item{ncol}{Number of columns in the arranged plots/facets}
 

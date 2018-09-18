@@ -5,7 +5,7 @@
 \title{helper function: plots standardized otu abundances}
 \usage{
 plot_a_group(phy, taxnames, label = "NULL", otus = TRUE,
-  ribbon = TRUE, ncol = 5)
+  ribbon = TRUE, ncol = 5, is.numeric.label = F)
 }
 \arguments{
 \item{phy}{Phyloseq object}
@@ -20,6 +20,8 @@ If list, output will be facetted by the elements of the list.}
 \item{ribbon}{Plot error bounds (+/- 2*SD)}
 
 \item{ncol}{Number of columns in facets}
+
+\item{is.numeric.label}{If TRUE, force coertion of labels to numeric}
 
 \item{x}{character vector with otu names}
 }

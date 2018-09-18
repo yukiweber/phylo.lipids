@@ -137,11 +137,11 @@ if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-erro
 ## if 'count = "n"', the NUMBER OF OTUS affiliated with each taxonomic group (e.g. Phylum) will be used,
 ## regardless of the abundance of the indivisual otus
  
-P = PHY_rel
+P = PHY3
 
 plot_groups(phy = P,
             label = "Depth",
-            k = 19,
+            k = 25,
             #h=1.5,
             otus = T,
             level = "Phylum",

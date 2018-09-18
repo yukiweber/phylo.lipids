@@ -5,7 +5,8 @@
 \title{helper function: plots standardized otu abundances}
 \usage{
 plot_a_group(phy, taxnames, label = "NULL", otus = TRUE,
-  ribbon = TRUE, ncol = 5, is.numeric.label = F)
+  ribbon = TRUE, ncol = 5, is.numeric.label = F,
+  standardize = c("sum", "max"), wt.means = F)
 }
 \arguments{
 \item{phy}{Phyloseq object}
@@ -22,6 +23,11 @@ If list, output will be facetted by the elements of the list.}
 \item{ncol}{Number of columns in facets}
 
 \item{is.numeric.label}{If TRUE, force coertion of labels to numeric}
+
+\item{standardize}{Method of standardization of the otu abundances,
+either to the sum or the maximum across all samples}
+
+\item{wt.means}{Plot weighted means by abundance of the otus (!!! under development !!!)}
 
 \item{x}{character vector with otu names}
 }

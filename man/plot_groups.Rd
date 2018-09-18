@@ -9,7 +9,8 @@ plot_groups(phy, level = "Phylum", label = "NULL", use_groups = F,
   ribbon = T, prune_groups = NULL, count = c("n", "sum"),
   fancy = T, highlight = "NULL", standardize = c("sum", "max"),
   ncol = NULL, key_col = 2, clust = c("ward.D2", "ward.D", "single",
-  "complete", "average", "mcquitty", "median", "centroid"))
+  "complete", "average", "mcquitty", "median", "centroid"),
+  dist = c("euclidean", "bray", "..."))
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
@@ -27,19 +28,23 @@ or a vector of same lengh as observations}
 
 \item{prune_groups}{A character vector with the grop names to be displayed. If NULL, all are shown.}
 
+\item{count}{Determines whether the statistics are based on the NUMBER of otus or their ABUNDANCE SUMS}
+
 \item{highlight}{Taxa to be highlighted}
 
-\item{standardize}{Method of standardization of the otu abundances,
-either to the sum or the maximum across all samples}
+\item{standardize}{Method of standardization of the otu abundances,}
 
 \item{ncol}{Number of columns in the arranged plots/facets}
 
 \item{key_col}{Number of columns of the color key}
 
 \item{clust}{Hclust method passed to hclust() in group_tax()}
+
+\item{dist}{Distance matrix type passed to 'dist()' to be used in clustering
+either to the sum or the maximum across all samples}
 }
 \value{
-a summary plot
+A list of summary plots and data
 }
 \description{
 Plots vertical profiles of OTU groups with taxonomy summary

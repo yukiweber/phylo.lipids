@@ -34,7 +34,8 @@ Imports:
    ggpubr,
    gridExtra,
    stringr
-Depends: R (>= 2.10)
+Depends: 
+   R (>= 2.10)
 Remotes: 
    github::joey711/phyloseq,
    github::Bioconductor/BiocInstaller

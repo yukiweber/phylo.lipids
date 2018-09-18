@@ -14,6 +14,7 @@
 #' @param prune_groups A character vector with the grop names to be displayed. If NULL, all are shown.
 #' @param highlight Taxa to be highlighted
 #' @param standardize Method of standardization of the otu abundances,
+#' @param dist Distance matrix type passed to 'dist()' to be used in clustering
 #' either to the sum or the maximum across all samples
 #' @param count Determines whether the statistics are based on the NUMBER of otus or their ABUNDANCE SUMS
 #' @export
@@ -37,7 +38,8 @@ plot_groups = function (phy,
                         standardize = c("sum","max"),
                         ncol = NULL,
                         key_col = 2,
-                        clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid")
+                        clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid"),
+                        dist = c( "euclidean","bray","...")
                         ) {
 
 
@@ -99,16 +101,6 @@ plot_groups = function (phy,
       colnames(x) =
          s[[grep( label[1], colnames(s), ignore.case = T, value = T)]]
    }
-head(x)
-
-   class(x)
-class(   s[[label]] )
-as.data.frame( unclass(s)) ->ss
-class(ss)
-
-class(phy@sam_data) ->> cp
-colnames(s)
-is.data.frame(phy@sam_data)
 
    # compute abundance SUMs across all samples ----
    sum = Reduce('+', x) # / ncol(x) # prev: averages
@@ -247,7 +239,8 @@ is.data.frame(phy@sam_data)
       panel.grid.minor = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
       panel.border = ggplot2::element_rect(colour = "black", size=1, fill = NA),
-      strip.text = ggplot2::element_text(size = 9),
+      #strip.text = ggplot2::element_text(size = 9),
+      text = ggplot2::element_text(size = 10),
       aspect.ratio = 2.5 )
 
    ### fancy overlay plots ----
@@ -265,7 +258,8 @@ is.data.frame(phy@sam_data)
                    label = label,
                    otus = otus,
                    ribbon = ribbon,
-                   is.numeric.label = num) +
+                   is.numeric.label = num,
+                   standardize = standardize) +
       blank_theme_x +
       ggplot2::labs(title = i)   -> a
 
@@ -335,7 +329,8 @@ is.data.frame(phy@sam_data)
                    otus = otus,
                    ribbon = ribbon,
                    ncol = ncol,
-                   is.numeric.label = num) +
+                   is.numeric.label = num,
+                   standardize = standardize) +
          blank_theme_x
 
    Fp =

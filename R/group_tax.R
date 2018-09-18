@@ -36,21 +36,11 @@ group_tax = function(phy,
       # make PROFILES
       # otu = sapply(otu,`/`,rowSums(otu)) ### deprecated as it is done in the step before
 
-
       # standardize abundances of each otu relative to  ----
       # the max value across all samples
-      if (standardize[1] == "max") {
-         otu =
-            as.data.frame(
-               lapply ( otu , `/` , # apply to each row
-                       apply(otu, 1, max) # max values in reach row (otu)
-                     )
-            )
-      }
-      # OR the abundance sum across all samples
-      if (standardize[1] == "sum") {
-         otu = as.data.frame(sapply(otu,`/`,rowSums(otu)))
-      }
+      otu0 = standardize_tax(phy, method = standardize[1])
+      otu = otu0 %>%
+         dplyr::select(-sum)
 
       # do the clustering
       hc = hclust( dist(otu, method = dist[1] ), method = clust[1])
@@ -69,7 +59,7 @@ group_tax = function(phy,
          hc1 %>%
       as.data.frame() %>%
       dplyr::mutate(otu = names(hc1),
-                    sum = sum) %>%
+                    sum = otu0$sum) %>%
       dplyr::rename(group = ".") %>%
       tibble::as.tibble()
 
@@ -94,11 +84,20 @@ group_tax = function(phy,
       L[paste("G",i,sep = "")] = C["otu"][which(C["group"] == i), ]
    }
 
-   # add statistics to group names
+
+
+      # add statistics to group names
    names(L) =
       paste0(
          names(L),
-         " (", round(gStat$rel, 2)*100, "%)")
+         " (",
+         sapply(gStat$rel, function(x) signif(x,2)) *100,
+         "%)")
+
+   # order groups by abundance
+   ord =  order(gStat[[count[1]]])
+   L = L[rev(ord)]
+
    return(L)
 }
 

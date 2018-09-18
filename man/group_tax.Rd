@@ -6,7 +6,8 @@
 \usage{
 group_tax(phy, h = FALSE, k = FALSE, dist = c("euclidean", "bray",
   "..."), clust = c("ward.D2", "ward.D", "single", "complete", "average",
-  "mcquitty", "median", "centroid"), standardize = c("sum", "max"))
+  "mcquitty", "median", "centroid"), standardize = c("sum", "max"),
+  count = c("n", "sum"))
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
@@ -22,6 +23,8 @@ Overrides 'h' setting if provided (i.e., numeric).}
 
 \item{standardize}{Method of standardization of the otu abundances,
 either to the sum or the maximum across all samples}
+
+\item{count}{Determines whether the statistics are based on the NUMBER of otus or their ABUNDANCE SUMS}
 }
 \value{
 A list with i elements, containing the OTU/taxa names in the i-th group

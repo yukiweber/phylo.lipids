@@ -8,6 +8,9 @@
 #' @param otus display individual otus?
 #' @param ribbon Plot error bounds (+/- 2*SD)
 #' @param ncol Number of columns in facets
+#' @param wt.means Plot weighted means by abundance of the otus (!!! under development !!!)
+#' @param standardize Method of standardization of the otu abundances,
+#' either to the sum or the maximum across all samples
 #' @param is.numeric.label If TRUE, force coertion of labels to numeric
 #' @export
 #' @return ggplot line plot
@@ -19,7 +22,9 @@ plot_a_group = function (phy,
                          otus = TRUE,
                          ribbon = TRUE,
                          ncol = 5,
-                         is.numeric.label = F
+                         is.numeric.label = F,
+                         standardize = c("sum","max"),
+                         wt.means = F # under development
                          ) {
 
    # check if taxa names are valid
@@ -42,8 +47,9 @@ plot_a_group = function (phy,
 
    # get otu table
    as.data.frame(unclass(P@otu_table), strngsAsFactors = F) -> otu
-   # standardize abundances
-   OT = as.data.frame(sapply(otu,`/`,rowSums(otu)))
+   # standardize abundances and sums
+   OT = standardize_tax(P, method = standardize) #%>%
+      #dplyr::select(-sum)
 
    # get sam_data
    # class 'phyloseq may cause 'subset out of bound' error >> unclass
@@ -53,7 +59,8 @@ plot_a_group = function (phy,
    sam_var="sample"
    if(LAB == T){
       sam_var = label
-      colnames(OT) =
+      # disregard the sum column
+      colnames(OT)[1:ncol(OT)-1] =
          s[[grep(label[1], colnames(s), ignore.case = T, value = T)]]
       sam_labs = s[[grep(label[1], colnames(s), ignore.case = T, value = T)]]
       }
@@ -73,9 +80,9 @@ plot_a_group = function (phy,
       dplyr::filter(group != "")
    }
 
-   # gather ata
+   # gather data ----
    OT %>%
-      tidyr::gather(key = !!sam_var, value = "abundance", -otu, -group) %>%
+      tidyr::gather(key = !!sam_var, value = "abundance", -otu, -group, -sum) %>%
       tibble::as.tibble() -> OT1
 
    # if alternative labels are numeric, coerce to muneric
@@ -84,11 +91,58 @@ plot_a_group = function (phy,
    }
 
    # factorize groups to preserve order
-   OT1$group = factor (OT1$group, levels = unique(OT1$group))
+   OT1$group = factor (OT1$group, levels = names(taxnames))
 
-   # initialize a plot
+   OT0=OT1
+
+
+
+   ### add weighted abundances ----
+   # if taxnames was not a list, set dummy group to 'x'
+
+   if(wt.means == T) {
+
+   if (length(levels(OT1$group)) == 0) {
+      OT1$group = factor ("x", levels=c("x"))
+   }
+   # get group sums
+   mm= as.data.frame(matrix(nrow = 0,ncol = 7))
+   colnames(mm) = c("otu"   ,    "sum"   ,    "group"  ,   "depth"  ,   "abundance", "g.sum"   ,  "g.max.abu")
+   for (i in levels(OT1$group)) {
+      OTa = OT1 %>%
+            dplyr::filter(group==i)
+      OTx =
+         OT1 %>%
+            dplyr::filter(group==i) %>%
+            dplyr::group_by_("otu") %>%
+            dplyr::summarise(g.sum = sum(sum),  # absolute sum of sums within group
+                             g.max.abu = max(abundance)
+            )
+      mmx= merge(OTa,OTx, by = "otu")
+      #dim(mmx)
+      #dim(OTa)
+      mm = rbind(mm,mmx)
+   }
+
+   mm = tibble::as.tibble(mm)
+   ## levels(mm$group)
+   OT1 = mm
+
+   # compute weighted abundances within groups
+   OT1 =
+      OT1 %>%
+      dplyr::mutate(wt.abu = abundance * sum / g.sum / g.max.abu)
+   }
+
+
+   #########################
+   ## initialize a plot ----
    OT1 %>%
-   ggplot2::ggplot( ggplot2::aes_string(y= "abundance", x = sam_var, group =" otu")) -> p
+   ggplot2::ggplot( ggplot2::aes_string(y= "abundance",
+                                        x = sam_var,
+                                        group = "otu"
+                                        )
+                    ) -> p
 
    # plus/minus SD Ribbon
    if (ribbon == TRUE) {
@@ -106,7 +160,9 @@ plot_a_group = function (phy,
       p = p +
          ggplot2::geom_path(color="gray30",
                             size = 0.3,
-                            alpha = 0.4)
+                            alpha = 0.4
+                            #ggplot2::aes(alpha=sum)
+                            )
    }
 
    # mean line
@@ -119,6 +175,18 @@ plot_a_group = function (phy,
       #ggplot2::coord_cartesian(ylim=c(0, 1), expand = c(0,0)) +
       ggplot2::scale_y_continuous(expand = c(0,0))+
       ggplot2::coord_flip(ylim = c(0, max(OT1$abundance)), clip = "on")
+
+   # weighted mean line ----
+   if (wt.means == T) {
+   p = p +
+      ggplot2::stat_summary(ggplot2::aes_string(y= "wt.abu", x = sam_var, group =1),
+                            fun.y= function(y) mean(y),
+                            geom = "line",
+                            size=1.2,
+                            color="darkblue",
+                            data=OT1)
+   }
+
 
    # if another label was specified
    if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),

@@ -128,10 +128,10 @@ plot_a_group = function (phy,
          }
 
    # if observations are depths and numeric, reverse scale
-   if(length(grep("depth", sam_var)) >= 1
+   if(length(grep("depth", sam_var, ignore.case = T)) >= 1
       & is.numeric(OT1[[sam_var]]) == TRUE) {
       p = p + ggplot2::scale_x_reverse(expand = c(0,0),
-                                       limits = c(max(OT1$sample), 0))
+                                       limits = c(max(OT1[[sam_var]]), 0))
       }
 
    p + ggplot2::ylab(label="standardized abundacne") -> p

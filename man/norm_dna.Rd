@@ -4,7 +4,7 @@
 \alias{norm_dna}
 \title{normalizes read numbers}
 \usage{
-norm_dna(phy, dna, relative = F)
+norm_dna(phy, dna = 1, relative = T)
 }
 \arguments{
 \item{phy}{Phyloseq object containing an OTU and taxonomy table.}

@@ -4,9 +4,9 @@
 \alias{group_tax}
 \title{Finds groups of OTUs/taxa with similar spatial distribution}
 \usage{
-group_tax(phy, h = FALSE, k = 20, dist = c("euclidean", "bray",
+group_tax(phy, h = FALSE, k = FALSE, dist = c("euclidean", "bray",
   "..."), clust = c("ward.D2", "ward.D", "single", "complete", "average",
-  "mcquitty", "median", "centroid"))
+  "mcquitty", "median", "centroid"), standardize = c("sum", "max"))
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
@@ -19,6 +19,9 @@ Overrides 'h' setting if provided (i.e., numeric).}
 \item{dist}{Distance matrix type passed to 'dist()' to be used in clustering}
 
 \item{clust}{Hclust method passed to 'hclust()'}
+
+\item{standardize}{Method of standardization of the otu abundances,
+either to the sum or the maximum across all samples}
 }
 \value{
 A list with i elements, containing the OTU/taxa names in the i-th group

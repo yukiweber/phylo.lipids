@@ -84,21 +84,31 @@ plot_groups = function (phy,
 
    ## extract data from phyloseq object
    # OTU table (rows = taxa)
-   x = as.data.frame (phy@otu_table, stringsAsFactors = F) %>%
-      tibble::as.tibble()
+   x = as.data.frame ( unclass (phy@otu_table) , stringsAsFactors = F) #
+      #tibble::as.tibble()
    colnames(x) -> sam_names
+   # class 'phyloseq caused 'subset out of bound' error >> unclass
+   s = as.data.frame ( unclass( phy@sam_data), stringsAsFactors = F )
 
-
-      # if alternative label was defined
+   # if alternative label was defined
    # replace sample names with sample data (e.g. "depth)
    # use stringr to ignore case
    sam_var="sample"
    if( LAB == T) {
       sam_var = label[1]
       colnames(x) =
-         phy@sam_data[[grep( label[1], colnames(phy@sam_data),ignore.case = T)]]
+         s[[grep( label[1], colnames(s), ignore.case = T, value = T)]]
    }
+head(x)
 
+   class(x)
+class(   s[[label]] )
+as.data.frame( unclass(s)) ->ss
+class(ss)
+
+class(phy@sam_data) ->> cp
+colnames(s)
+is.data.frame(phy@sam_data)
 
    # compute abundance SUMs across all samples ----
    sum = Reduce('+', x) # / ncol(x) # prev: averages
@@ -122,7 +132,7 @@ plot_groups = function (phy,
     dplyr::mutate (!!level := as.character (.[[level]])) %>% # make sure taxonomy column it's not a factor
     dplyr::left_join (x, by ="otu") # add abundance data
 
-   # gather
+   # gather with 'sam_var'
    x1 %>%
       tidyr::gather(key = !!sam_var, value = "abundance", -otu, -sum, -!!level ) %>%
       tibble::as.tibble() -> x2

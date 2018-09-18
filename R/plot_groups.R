@@ -261,6 +261,7 @@ plot_groups = function (phy,
                    is.numeric.label = num,
                    standardize = standardize) +
       blank_theme_x +
+      ggplot2::theme(legend.position = "none") +
       ggplot2::labs(title = i)   -> a
 
       # and a pie chart

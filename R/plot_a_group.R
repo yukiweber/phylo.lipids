@@ -95,19 +95,17 @@ plot_a_group = function (phy,
 
    OT0=OT1
 
-
-
    ### add weighted abundances ----
    # if taxnames was not a list, set dummy group to 'x'
 
-   if(wt.means == T) {
+#   if(wt.means == T) {
 
    if (length(levels(OT1$group)) == 0) {
       OT1$group = factor ("x", levels=c("x"))
    }
    # get group sums
-   mm= as.data.frame(matrix(nrow = 0,ncol = 7))
-   colnames(mm) = c("otu"   ,    "sum"   ,    "group"  ,   "depth"  ,   "abundance", "g.sum"   ,  "g.max.abu")
+   mm = as.data.frame(matrix(nrow = 0,ncol = 8))
+   colnames(mm) = c("otu"   ,    "sum"   ,    "group"  ,   "depth"  ,   "abundance", "g.sum"   ,  "g.max.abu", "g.rel.sum")
    for (i in levels(OT1$group)) {
       OTa = OT1 %>%
             dplyr::filter(group==i)
@@ -117,7 +115,8 @@ plot_a_group = function (phy,
             dplyr::group_by_("otu") %>%
             dplyr::summarise(g.sum = sum(sum),  # absolute sum of sums within group
                              g.max.abu = max(abundance)
-            )
+            ) %>%
+            dplyr::mutate(g.rel.sum = g.sum / sum(g.sum))
       mmx= merge(OTa,OTx, by = "otu")
       #dim(mmx)
       #dim(OTa)
@@ -126,13 +125,15 @@ plot_a_group = function (phy,
 
    mm = tibble::as.tibble(mm)
    ## levels(mm$group)
+
    OT1 = mm
+   OT1 ->> OT1
 
    # compute weighted abundances within groups
    OT1 =
       OT1 %>%
       dplyr::mutate(wt.abu = abundance * sum / g.sum / g.max.abu)
-   }
+ #  }
 
 
    #########################
@@ -155,22 +156,23 @@ plot_a_group = function (phy,
                                alpha = 0.5)
    }
 
-   # individual otus
+   # individual otus ----
    if (otus == TRUE) {
       p = p +
-         ggplot2::geom_path(color="gray30",
-                            size = 0.3,
-                            alpha = 0.4
+         ggplot2::geom_line(color="gray30",
+                            size = 0.5,
+                            ggplot2::aes(alpha = g.rel.sum)
                             #ggplot2::aes(alpha=sum)
                             )
    }
 
-   # mean line
+   # mean line ----
    p = p +
       ggplot2::stat_summary(fun.y="mean",
                             geom = "line",
                             ggplot2::aes(group = 1),
-                            size=1.2,
+                            size=1,
+                            alpha = 0.5,
                             color="red") +
       #ggplot2::coord_cartesian(ylim=c(0, 1), expand = c(0,0)) +
       ggplot2::scale_y_continuous(expand = c(0,0))+

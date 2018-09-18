@@ -237,8 +237,9 @@ Now let's have a closer look at the phylogenetic diversity in SELECTED cluster g
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set
 
-G_sel = paste0("G",
-               c(3, 5, 13, 15)
+G_sel = names(g[c(
+                  3, 5, 13, 15
+                  )]
                )
 
 int_tax = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis")

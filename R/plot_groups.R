@@ -15,10 +15,9 @@
 #' @param highlight Taxa to be highlighted
 #' @param standardize Method of standardization of the otu abundances,
 #' either to the sum or the maximum across all samples
+#' @param count Determines whether the statistics are based on the NUMBER of otus or their ABUNDANCE SUMS
 #' @export
-#' @usage
-#' @examples
-#' @return a summary plot
+#' @return A list of summary plots and data
 
 
 plot_groups = function (phy,
@@ -64,7 +63,8 @@ plot_groups = function (phy,
       group_tax(k = k,
                 h = h,
                 clust = clust,
-                standardize = standardize) -> g
+                standardize = standardize,
+                count = count) -> g
    }
 
    # otherwise use provided group list
@@ -247,6 +247,7 @@ is.data.frame(phy@sam_data)
       panel.grid.minor = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
       panel.border = ggplot2::element_rect(colour = "black", size=1, fill = NA),
+      strip.text = ggplot2::element_text(size = 9),
       aspect.ratio = 2.5 )
 
    ### fancy overlay plots ----

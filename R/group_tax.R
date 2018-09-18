@@ -9,6 +9,7 @@
 #' @param clust Hclust method passed to 'hclust()'
 #' @param standardize Method of standardization of the otu abundances,
 #' either to the sum or the maximum across all samples
+#' @param count Determines whether the statistics are based on the NUMBER of otus or their ABUNDANCE SUMS
 #' @export
 #' @examples
 #' @return A list with i elements, containing the OTU/taxa names in the i-th group
@@ -18,7 +19,8 @@ group_tax = function(phy,
                      k = FALSE,
                      dist = c( "euclidean","bray","..."),
                      clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid"),
-                     standardize = c("sum","max")
+                     standardize = c("sum","max"),
+                     count = c("n","sum")
                      ) {
 
    if (is.numeric(h)==T & is.numeric(k)==T){stop("Provide either h or k to cut the cluster tree!")}
@@ -27,6 +29,9 @@ group_tax = function(phy,
    clust_tax = function (phy, h = F, k = F) {
 
       otu = tibble::as.tibble(as.data.frame(phy@otu_table, strngsAsFactors = F))
+
+      # compute abundance SUMs across all samples ----
+      sum = Reduce('+', otu) # / ncol(x) # prev: averages
 
       # make PROFILES
       # otu = sapply(otu,`/`,rowSums(otu)) ### deprecated as it is done in the step before
@@ -47,11 +52,8 @@ group_tax = function(phy,
          otu = as.data.frame(sapply(otu,`/`,rowSums(otu)))
       }
 
-
-
       # do the clustering
       hc = hclust( dist(otu, method = dist[1] ), method = clust[1])
-
 
       # cut tree gives a table with otu name vs group affiliation
       if (is.numeric(h) == T) {hc1 = cutree(hc, h = h)}
@@ -62,11 +64,12 @@ group_tax = function(phy,
       # plot the tree
       # as to be written... or not
 
-      # format that table
+      # format that group table
       hc2 =
          hc1 %>%
       as.data.frame() %>%
-      dplyr::mutate(otu = names(hc1)) %>%
+      dplyr::mutate(otu = names(hc1),
+                    sum = sum) %>%
       dplyr::rename(group = ".") %>%
       tibble::as.tibble()
 
@@ -75,10 +78,14 @@ group_tax = function(phy,
 
    clust_tax(phy, h=h, k=k) -> C
 
-   # number of taxa in each group
+   # compute group count/abundance stats of otus
    C %>%
       dplyr::group_by(group) %>%
-      dplyr::tally() -> Cn
+      dplyr::summarise(n = n(),
+                       sum=sum(sum)) %>%
+      # depending on selectioj in 'count'
+      dplyr::mutate(rel = get(count)/sum( get(count) )
+                    ) -> gStat
 
    # prepare a lis
    L = list()
@@ -86,5 +93,13 @@ group_tax = function(phy,
    for (i in 1: max(C$group)){
       L[paste("G",i,sep = "")] = C["otu"][which(C["group"] == i), ]
    }
-return(L)
+
+   # add statistics to group names
+   names(L) =
+      paste0(
+         names(L),
+         " (", round(gStat$rel, 2)*100, "%)")
+   return(L)
 }
+
+

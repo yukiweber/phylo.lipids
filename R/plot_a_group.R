@@ -127,7 +127,7 @@ plot_a_group = function (phy,
    ## levels(mm$group)
 
    OT1 = mm
-   OT1 ->> OT1
+   #OT1 ->> OT1
 
    # compute weighted abundances within groups
    OT1 =

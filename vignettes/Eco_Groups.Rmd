@@ -237,10 +237,11 @@ Now let's have a closer look at the phylogenetic diversity in SELECTED cluster g
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set
 
-G_sel = names(g[c(
-                  3, 5, 13, 15
-                  )]
-               )
+Gs = paste0("G", c(
+         5, 6, 13, 15
+                     )) 
+# G_sel = mapply( function(Gs) grep(Gs, names(g), value = T), Gs, SIMPLIFY = T)
+G_sel = sapply( Gs, function(x) grep(x, names(g), value = T))
 
 int_tax = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis")
 
@@ -248,10 +249,10 @@ plot_groups(phy = P,
             label = "depth",
             use_groups = g,
             otus = T,
-            level = "Family",
+            level = "Order",
             fancy = T,
             count = "sum",
-            cutoff = 0.03, 
+            cutoff = 0.06, 
             exempt = int_tax, ######## !
             prune_groups = G_sel, ####### !
             # highlight = int_tax,

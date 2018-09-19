@@ -53,11 +53,13 @@ plot_groups = function (phy,
    # and set a flag 'LAB'
    LAB = F
    if (label != "NULL") {
-      if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
-                              stringr::regex(label[1], ignore_case = TRUE )
-                              ) == T)
-         # length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1 ## alternative
-         { LAB = T
+      if(
+         #stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+         #                     stringr::regex(label[1], ignore_case = TRUE )
+         #                     ) == T)
+         length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1 ## alternative
+      ) {
+         LAB = T
       } else {
          stop ("Label not found in phy@sam_data!")
       }
@@ -99,8 +101,7 @@ plot_groups = function (phy,
    s = as.data.frame ( unclass( phy@sam_data), stringsAsFactors = F )
 
    # if alternative label was defined
-   # replace sample names with sample data (e.g. "depth)
-   # use stringr to ignore case
+   # replace sample names with sample data (e.g. "depth); ignore case
    sam_var="sample"
    if( LAB == T) {
       sam_var = label[1]

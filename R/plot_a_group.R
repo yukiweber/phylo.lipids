@@ -38,11 +38,12 @@ plot_a_group = function (phy,
    # and set a flag 'LAB'
    LAB = F
    if (label != "NULL") {
-      if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
-                              stringr::regex(label[1], ignore_case = TRUE )
-                              ) == T)
-         # length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1 ## alternative
-         { LAB = T
+      if(
+      # stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+      #                        stringr::regex(label[1], ignore_case = TRUE )
+      #                        ) == T)
+      length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1  ## alternative
+         ) { LAB = T
       } else {
          stop ("Label not found in phy@sam_data!")
       }
@@ -210,10 +211,12 @@ plot_a_group = function (phy,
 
 
    # if another label was specified
-   if(
-      stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
-                              stringr::regex(label[1], ignore_case = TRUE )
-                              ) == T)
+   # replace label
+   if( label != "NULL"
+      #stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+      #                        stringr::regex(label[1], ignore_case = TRUE )
+      #                        ) == T
+   )
       {
          p = p + ggplot2::xlab(label=label)
          }

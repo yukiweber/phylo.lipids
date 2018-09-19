@@ -140,7 +140,7 @@ if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-erro
 P = PHY3
 
 plot_groups(phy = P,
-            label = "Depth",
+            label = "dep",
             k = 25,
             #h=1.5,
             otus = T,
@@ -150,6 +150,7 @@ plot_groups(phy = P,
             ncol = 10,
             clust = "ward.D2",
             standardize = "sum"
+            #rev.scale = F
             ) -> GG0
 
 

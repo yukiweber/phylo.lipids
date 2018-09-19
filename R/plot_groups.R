@@ -5,6 +5,7 @@
 #' @param label A column of 'phy'at'samdata' that is used to label observations (character string),
 #' or a vector of same lengh as observations
 #' @param cutoff cutoff abundance for assignment of 'other'
+#' @param rev.scale reverse y scale. automatic if label == "depth"
 #' @param exempt character vector of taxa exempt from cutoff
 #' @param level taxonomic level
 #' @param ncol Number of columns in the arranged plots/facets
@@ -24,6 +25,8 @@
 plot_groups = function (phy,
                         level="Phylum",
                         label ="NULL", # alternative labe to sample names
+                        is.numeric.label = "NULL",
+                        rev.scale = "NULL",
                         use_groups = F,
                         k = 10,
                         h = F,
@@ -45,17 +48,20 @@ plot_groups = function (phy,
 
    # input checks ----
 
+   # if label was specified
    # check if label value is valid
    # and set a flag 'LAB'
    LAB = F
-   if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
-                           stringr::regex(label[1], ignore_case = TRUE )
-                           ) == T) {
-      LAB = T
-   } else {
-      stop ("Label not found in phy@sam_data!")
+   if (label != "NULL") {
+      if( stringr::str_detect(paste(colnames(phy@sam_data), collapse = " "),
+                              stringr::regex(label[1], ignore_case = TRUE )
+                              ) == T)
+         # length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1 ## alternative
+         { LAB = T
+      } else {
+         stop ("Label not found in phy@sam_data!")
       }
-
+   }
 
 
    # cluster groups ----
@@ -183,9 +189,15 @@ plot_groups = function (phy,
    x3[level] = tax
 
 
-   # if the label data is numeric, convert to numeric (otherwise character!)
-   if (is.numeric(phy@sam_data[[label[1]]]) == T) {
-      x3[label] = as.numeric(x3[[label]])
+   # if the label data is numeric, convert to numeric (otherwise character!) ----
+   # and set a glag 'num' that can be passed
+   num = F
+   # if no choice was made, check
+   if (is.null(is.numeric.label) == F) {
+      if (is.numeric(phy@sam_data[[label[1]]]) == T) {
+         x3[label] = as.numeric(x3[[label]])
+         num = T
+      }
    }
 
    # color assignments ----
@@ -252,13 +264,14 @@ plot_groups = function (phy,
    # for each group:
    for (i in names(g)) {
 
-      # make a distribution line plot
+      # make a distribution line plot ----
       plot_a_group(taxnames = g[[i]],
                    phy = phy,
                    label = label,
                    otus = otus,
                    ribbon = ribbon,
                    is.numeric.label = num,
+                   rev.scale = rev.scale,
                    standardize = standardize) +
       blank_theme_x +
       ggplot2::theme(legend.position = "none") +
@@ -331,7 +344,8 @@ plot_groups = function (phy,
                    ribbon = ribbon,
                    ncol = ncol,
                    is.numeric.label = num,
-                   standardize = standardize) +
+                   standardize = standardize,
+                   rev.scale = rev.scale) +
          blank_theme_x
 
    Fp =

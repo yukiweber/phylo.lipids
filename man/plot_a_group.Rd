@@ -6,7 +6,7 @@
 \usage{
 plot_a_group(phy, taxnames, label = "NULL", otus = TRUE,
   ribbon = TRUE, ncol = 5, is.numeric.label = F,
-  standardize = c("sum", "max"), wt.means = F)
+  standardize = c("sum", "max"), wt.means = F, rev.scale = "NULL")
 }
 \arguments{
 \item{phy}{Phyloseq object}
@@ -28,6 +28,8 @@ If list, output will be facetted by the elements of the list.}
 either to the sum or the maximum across all samples}
 
 \item{wt.means}{Plot weighted means by abundance of the otus (!!! under development !!!)}
+
+\item{rev.scale}{force reverse scale ON/OFF (reverse is otherwise automatic for label =='depth')}
 
 \item{x}{character vector with otu names}
 }

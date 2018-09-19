@@ -4,7 +4,8 @@
 \alias{plot_groups}
 \title{Plots vertical profiles of OTU groups with taxonomy summary}
 \usage{
-plot_groups(phy, level = "Phylum", label = "NULL", use_groups = F,
+plot_groups(phy, level = "Phylum", label = "NULL",
+  is.numeric.label = "NULL", rev.scale = "NULL", use_groups = F,
   k = 10, h = F, cutoff = 0.03, exempt = FALSE, otus = T,
   ribbon = T, prune_groups = NULL, count = c("n", "sum"),
   fancy = T, highlight = "NULL", standardize = c("sum", "max"),
@@ -19,6 +20,8 @@ plot_groups(phy, level = "Phylum", label = "NULL", use_groups = F,
 
 \item{label}{A column of 'phy'at'samdata' that is used to label observations (character string),
 or a vector of same lengh as observations}
+
+\item{rev.scale}{reverse y scale. automatic if label == "depth"}
 
 \item{use_groups}{Use a previously generated list of otu groups}
 

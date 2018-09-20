@@ -16,6 +16,7 @@
 #' @param highlight Taxa to be highlighted
 #' @param standardize Method of standardization of the otu abundances,
 #' @param dist Distance matrix type passed to 'dist()' to be used in clustering
+#' @param pie.scale Adjustment of pie charts in 'fancy' plots: default=1
 #' either to the sum or the maximum across all samples
 #' @param count Determines whether the statistics are based on the NUMBER of otus or their ABUNDANCE SUMS
 #' @export
@@ -42,7 +43,8 @@ plot_groups = function (phy,
                         ncol = NULL,
                         key_col = 2,
                         clust = c("ward.D2", "ward.D", "single", "complete", "average", "mcquitty", "median", "centroid"),
-                        dist = c( "euclidean","bray","...")
+                        dist = c( "euclidean","bray","..."),
+                        pie.scale = 1
                         ) {
 
 
@@ -275,6 +277,7 @@ plot_groups = function (phy,
                    rev.scale = rev.scale,
                    standardize = standardize) +
       blank_theme_x +
+      ggplot2::theme(axis.title.x = ggplot2::element_blank()) +
       ggplot2::theme(legend.position = "none") +
       ggplot2::labs(title = i)   -> a
 
@@ -296,9 +299,9 @@ plot_groups = function (phy,
                             y = 0.3, #The y location of the lower left corner of the plot.
                             width = 0.5,
                             height = 0.5,
-                            scale = 1
+                            scale = pie.scale
                             ) -> c
-
+c
       # add the grobs to a list
       L[[i]] =  c
    }

@@ -11,7 +11,7 @@ plot_groups(phy, level = "Phylum", label = "NULL",
   fancy = T, highlight = "NULL", standardize = c("sum", "max"),
   ncol = NULL, key_col = 2, clust = c("ward.D2", "ward.D", "single",
   "complete", "average", "mcquitty", "median", "centroid"),
-  dist = c("euclidean", "bray", "..."))
+  dist = c("euclidean", "bray", "..."), pie.scale = 1)
 }
 \arguments{
 \item{phy}{Phyloseq object containing at least an OTU and a taxonomy table.}
@@ -43,7 +43,9 @@ or a vector of same lengh as observations}
 
 \item{clust}{Hclust method passed to hclust() in group_tax()}
 
-\item{dist}{Distance matrix type passed to 'dist()' to be used in clustering
+\item{dist}{Distance matrix type passed to 'dist()' to be used in clustering}
+
+\item{pie.scale}{Adjustment of pie charts in 'fancy' plots: default=1
 either to the sum or the maximum across all samples}
 }
 \value{

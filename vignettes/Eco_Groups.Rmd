@@ -257,7 +257,8 @@ plot_groups(phy = P,
             exempt = int_tax, ######## !
             prune_groups = G_sel, ####### !
             # highlight = int_tax,
-            key_col = 2
+            key_col = 2,
+            pie.scale = 1.2
             ) -> GG4
 ```
 ```{r}

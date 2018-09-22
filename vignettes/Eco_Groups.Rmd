@@ -15,10 +15,12 @@ knitr::opts_chunk$set(
  echo = TRUE,
  include = TRUE,
  results = "show",
- cache = F,
+ cache = T,
  warning = FALSE,
  message = FALSE,
- fig.path = "figs/"
+ fig.path = "figs/",
+ fig.width = 8,
+ fig.asp=1
  # dev = c("pdf", "png")
  #dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE))
  )
@@ -125,7 +127,7 @@ if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-erro
 
 &nbsp;
 
-#### First explore the ecological niche distribution
+##### First explore the ecological niche distribution
 ```{r, echo=TRUE, include=TRUE, warning=TRUE}
 
 ## try to find 'k' values that give a good separation of the groups 
@@ -140,31 +142,30 @@ if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-erro
 P = PHY3
 
 plot_groups(phy = P,
-            label = "dep",
+            label = "de",
             k = 25,
             #h=1.5,
             otus = T,
             level = "Phylum",
             fancy = F,
             count = "sum",
-            ncol = 10,
+            ncol = 7,
             clust = "ward.D2",
-            standardize = "sum"
+            standardize = "sum", 
+            key_col = 3
             #rev.scale = F
             ) -> GG0
 
-
-GG0$facet_groups
-
 # save the group list
 GG0$group_dat -> g
-
-
+```
+```{r fig.asp=1, fig.width=8}
+GG0$facet_groups
 ```
 
-Then look at the phylogenetic diversity in each group. 
+##### Then look at the phylogenetic diversity in each group. 
 
-```{r}
+```{r, fig.asp=1}
 GG0$facet_pies
 ```
 
@@ -181,6 +182,8 @@ plot_groups(phy = P,
             fancy = F,
             count = "sum",
             cutoff = 0.05, ################### 5% cutoff
+            ncol = 7,
+            key_col = 3,
             exempt = "Nitrospirae"
             ) -> GG1
 
@@ -193,6 +196,8 @@ plot_groups(phy = P,
             fancy = F,
             count = "sum",
             cutoff = 1, # 100% cutoff
+            ncol = 7,
+            key_col = 3,
             exempt = c("Nitrospirae","Gammaproteobacteria","Bacteroidetes"), ############ !
             highlight = c("Nitrospirae","Gammaproteobacteria", "Bacteroidetes") ############# !
             ) -> GG2
@@ -217,23 +222,20 @@ plot_groups(phy = P,
             fancy = F,
             count = "sum",
             cutoff = 1,
+            ncol = 7,
+            key_col = 3,
             exempt = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis"), ############ !
             highlight = c("Methylococcaceae","Crenotrichaceae","Nitrospirales Incertae Sedis") ############# !
             ) -> GG2
 
-
-
 GG2$facet_pies
-
-
 ```
-
 
 &nbsp;
 
 Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
 
-```{r include=F}
+```{r, results='hide'}
 
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set
@@ -253,15 +255,16 @@ plot_groups(phy = P,
             level = "Order",
             fancy = T,
             count = "sum",
-            cutoff = 0.06, 
+            cutoff = 0.06,
+            ncol = 7,
+            key_col = 3,
             exempt = int_tax, ######## !
             prune_groups = G_sel, ####### !
             # highlight = int_tax,
-            key_col = 2,
             pie.scale = 1.2
             ) -> GG4
 ```
-```{r}
+```{r, fig.asp=0.5, fig.width=10, fig.align='center'}
 
 GG4$groups_pies_full
 ```

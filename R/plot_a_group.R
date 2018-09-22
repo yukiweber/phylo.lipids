@@ -43,7 +43,10 @@ plot_a_group = function (phy,
       #                        stringr::regex(label[1], ignore_case = TRUE )
       #                        ) == T)
       length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1  ## alternative
-         ) { LAB = T
+         ) {
+         LAB = T
+         # replace label with actual varaible name in samdat
+         label = grep(label[1],colnames(phy@sam_data), ignore.case = T, value = T)
       } else {
          stop ("Label not found in phy@sam_data!")
       }

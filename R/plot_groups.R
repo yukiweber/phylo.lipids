@@ -62,6 +62,8 @@ plot_groups = function (phy,
          length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1 ## alternative
       ) {
          LAB = T
+         # replace label with actual varaible name in samdat
+         label = grep(label[1],colnames(phy@sam_data), ignore.case = T, value = T)
       } else {
          stop ("Label not found in phy@sam_data!")
       }
@@ -238,7 +240,8 @@ plot_groups = function (phy,
       plot.background = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
-      strip.background = ggplot2::element_blank()
+      strip.background = ggplot2::element_blank(),
+      legend.position = "bottom"
    )
 
    # balnk theme for line plots

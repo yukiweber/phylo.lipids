@@ -24,13 +24,14 @@ knitr::opts_chunk$set(
  # dev = c("pdf", "png")
  #dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE))
  )
-
 #require(tinytex)
 ```
 &nbsp;
-## Exploring bacterial diversity in ecological niches within the water column
+
+**Exploring bacterial diversity in ecological niches within the water column**
 
 &nbsp;
+
 #### Install phylo.lipids package
 ```{r}
 # install devtools if not present and load
@@ -105,9 +106,8 @@ phylo.lipids::trim_taxa_samp (min = 4, fraction = F) -> PHY01
 
 PHY01 %>%
    remove_clades ( c("Chloroplast", "Mitochondria", "Archaea")) %>%
-   norm_dna(relative = T) %>%
+   norm_dna(dna = NULL) %>%
    diff_proteo() -> PHY_rel
-
 
 # normalize to total dna
 PHY01 %>%
@@ -122,6 +122,10 @@ if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-erro
     class (try (phyloseq::subset_taxa(PHY3, Family=="Mitochondria"))) != "try-error"
 ) { rm(PHY2)
     rep("ALARM: still containing Eukaryotes!!",6) }
+
+
+PHY_rel %>% tax_glom("Phylum") %>% plot_bar(fill="Phylum")
+PHY3 %>% tax_glom("Phylum") %>% plot_bar(fill="Phylum")
 
 ```
 
@@ -235,7 +239,7 @@ GG2$facet_pies
 
 Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
 
-```{r, results='hide', fig.show=F}
+```{r, results='hide', fig.show='hide'}
 
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set
@@ -252,7 +256,7 @@ plot_groups(phy = P,
             label = "depth",
             use_groups = g,
             otus = T,
-            level = "Order",
+            level = "Genus",
             fancy = T,
             count = "sum",
             cutoff = 0.06,
@@ -268,6 +272,4 @@ plot_groups(phy = P,
 
 GG4$groups_pies_full
 ```
-
-
 

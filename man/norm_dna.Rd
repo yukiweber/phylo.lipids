@@ -4,16 +4,13 @@
 \alias{norm_dna}
 \title{normalizes read numbers}
 \usage{
-norm_dna(phy, dna = 1, relative = T)
+norm_dna(phy, dna = NULL)
 }
 \arguments{
 \item{phy}{Phyloseq object containing an OTU and taxonomy table.}
 
 \item{dna}{numeric vector containing absolute DNA abundance in µg,
-which will be multipled with the relative OTU abudances}
-
-\item{relative}{If TRUE, the relative abundances will be returned, without multiplication with 'dna.
-Set to FASLE for absolute read counts. (default = FASLE)}
+which will be multipled with the relative OTU abudances. If NULL (default), OTU abundances will be normalized to the sum of all OUTs, i.e. relative abundanes}
 }
 \description{
 Returns either relative abundances (relative == TRUE), or OTU-specific DNA abundances in [ng] (!)

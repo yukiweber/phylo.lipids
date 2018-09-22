@@ -107,9 +107,8 @@ phylo.lipids::trim_taxa_samp (min = 4, fraction = F) -> PHY01
 
 PHY01 %>%
    remove_clades ( c("Chloroplast", "Mitochondria", "Archaea")) %>%
-   norm_dna(relative = T) %>%
+   norm_dna(dna = NULL) %>%
    diff_proteo() -> PHY_rel
-
 
 # normalize to total dna
 PHY01 %>%
@@ -124,6 +123,10 @@ if (class (try (phyloseq::subset_taxa(PHY3, Class=="Chloroplast"))) != "try-erro
     class (try (phyloseq::subset_taxa(PHY3, Family=="Mitochondria"))) != "try-error"
 ) { rm(PHY2)
     rep("ALARM: still containing Eukaryotes!!",6) }
+
+
+PHY_rel %>% tax_glom("Phylum") %>% plot_bar(fill="Phylum")
+PHY3 %>% tax_glom("Phylum") %>% plot_bar(fill="Phylum")
 
 ```
 
@@ -254,7 +257,7 @@ plot_groups(phy = P,
             label = "depth",
             use_groups = g,
             otus = T,
-            level = "Order",
+            level = "Genus",
             fancy = T,
             count = "sum",
             cutoff = 0.06,

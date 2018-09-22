@@ -38,8 +38,6 @@ plot_pie = function(x, # long format otu table with col, tax ('level')
          dplyr::filter(otu %in% taxa_groups)
    }
 
-   # factorize groups to preserve order
-   x$group = factor (x$group, levels = unique(x$group))
 
    # summarize
    x %>%
@@ -65,7 +63,8 @@ plot_pie = function(x, # long format otu table with col, tax ('level')
       ggplot2::coord_polar("y", start = 0) +
       # use the color vector previously generated for color mapping
       ggplot2::scale_fill_manual(values = tax_col$col) +
-      ggplot2::facet_wrap("group") +
+      ggplot2::facet_wrap("group",
+                          ncol = ncol) +
       ggplot2::guides(fill = ggplot2::guide_legend(
          title = paste0(level," (", count[1], ")"),
          ncol = key_col)

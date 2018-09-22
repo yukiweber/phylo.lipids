@@ -2,11 +2,11 @@
 title: "Lake Lugano 16S-rDNA ecology"
 author: "Yuki Weber"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output: 
+   html_document: 
+      code_folding: show
+      standalone: true
+      self-contained: true
 ---
 
 
@@ -28,9 +28,11 @@ knitr::opts_chunk$set(
 #require(tinytex)
 ```
 &nbsp;
-## Exploring bacterial diversity in ecological niches within the water column
+
+**Exploring bacterial diversity in ecological niches within the water column**
 
 &nbsp;
+
 #### Install phylo.lipids package
 ```{r}
 # install devtools if not present and load
@@ -235,7 +237,7 @@ GG2$facet_pies
 
 Now let's have a closer look at the phylogenetic diversity in SELECTED cluster groups of interest
 
-```{r, results='hide', fig.show=F}
+```{r, results='hide', fig.show='hide'}
 
 ## set fancy = TRUE to make overlay plots
 ## It's slow so do not use it on the full data set

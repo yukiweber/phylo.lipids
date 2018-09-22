@@ -62,6 +62,8 @@ plot_groups = function (phy,
          length(grep(label[1],colnames(phy@sam_data), ignore.case = T)) == 1 ## alternative
       ) {
          LAB = T
+         # replace label with actual varaible name in samdat
+         label = grep(label[1],colnames(phy@sam_data), ignore.case = T, value = T)
       } else {
          stop ("Label not found in phy@sam_data!")
       }
@@ -203,11 +205,14 @@ plot_groups = function (phy,
       }
    }
 
+   # factorize group vector to preserve order ----
+   x3$group = factor(x3$group, levels = names(g))
+
    # color assignments ----
    colourCount = length( unique(x3[[level]]))
    ptb =
       tibble::tibble (randomcoloR::distinctColorPalette (colourCount), levels(x3[[level]]))
-   ptb[[1]][which(ptb[[2]] == "other")] = "gray90" ## replace color assignment for other
+   ptb[[1]][which(ptb[[2]] == "other")] = "gray95" ## replace color assignment for other
    ptb[[1]][which(ptb[[2]] == "ukn.")] = "black" ## replace color assignment for ukn.
    colnames(ptb) = c("col",paste(level))
    # make sure the factor levels are the same order
@@ -238,7 +243,8 @@ plot_groups = function (phy,
       plot.background = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
-      strip.background = ggplot2::element_blank()
+      strip.background = ggplot2::element_blank(),
+      legend.position = "bottom"
    )
 
    # balnk theme for line plots
